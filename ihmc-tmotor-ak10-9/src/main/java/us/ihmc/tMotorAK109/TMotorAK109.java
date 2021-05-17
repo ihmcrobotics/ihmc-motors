@@ -1,5 +1,7 @@
 package us.ihmc.tMotorAK109;
 
-public class TMotorAK109
+import us.ihmc.tMotorCore.TMotor;
+
+public class TMotorAK109 extends TMotor
 {
 }

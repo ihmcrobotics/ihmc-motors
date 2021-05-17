@@ -1,5 +1,7 @@
 package us.ihmc.tMotorCore;
 
-public class TMotor
+import us.ihmc.motorsCore.Motor;
+
+public class TMotor implements Motor
 {
 }

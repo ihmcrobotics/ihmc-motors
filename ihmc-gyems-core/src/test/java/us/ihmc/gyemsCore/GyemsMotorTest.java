@@ -1,5 +1,5 @@
 package us.ihmc.gyemsCore;
 
-public class TMotorTest
+public class GyemsMotorTest
 {
 }

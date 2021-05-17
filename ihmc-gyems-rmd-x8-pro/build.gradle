@@ -15,7 +15,7 @@ ihmc {
 }
 
 mainDependencies {
-   api("us.ihmc:ihmc-motors-core:source")
+   api("us.ihmc:ihmc-gyems-core:source")
 }
 
 testDependencies {
