@@ -23,6 +23,7 @@ public abstract class CANMotor
    protected final YoDouble velocityFilterCoefficient;
    protected final YoDouble desiredActuatorPosition;
    protected final YoDouble desiredActuatorVelocity;
+   protected final YoDouble desiredActuatorTorque;
 
    protected final FilteredVelocityYoVariable filteredVelocity;
 
@@ -46,8 +47,9 @@ public abstract class CANMotor
       measuredTorqueCurrent = new YoDouble(prefix + "measuredTorqueCurrent", registry);                                  
       velocityFilterCoefficient = new YoDouble(prefix + "velocityFilterCoefficient", registry);                          
       desiredActuatorPosition = new YoDouble(prefix + "desiredActuatorPosition", registry);                              
-      desiredActuatorVelocity = new YoDouble(prefix + "desiredActuatorVelocity", registry);                         
-      
+      desiredActuatorVelocity = new YoDouble(prefix + "desiredActuatorVelocity", registry);
+      desiredActuatorTorque = new YoDouble(prefix + "desiredActuatorTorque", registry);
+
       filteredVelocity = new FilteredVelocityYoVariable(prefix + "filteredVelocity", null, velocityFilterCoefficient, measuredActuatorPosition, dt, registry);
 
       functionGenerator = new YoFunctionGenerator(prefix + "functionGenerator", time, registry);

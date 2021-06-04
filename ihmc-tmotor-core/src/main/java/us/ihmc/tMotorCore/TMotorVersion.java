@@ -1,5 +1,8 @@
 package us.ihmc.tMotorCore;
 
+import us.ihmc.tMotorCore.parameters.TMotorAK109Parameters;
+import us.ihmc.tMotorCore.parameters.TMotorAK606Parameters;
+import us.ihmc.tMotorCore.parameters.TMotorAK809Parameters;
 import us.ihmc.tMotorCore.parameters.TMotorParameters;
 
 public enum TMotorVersion

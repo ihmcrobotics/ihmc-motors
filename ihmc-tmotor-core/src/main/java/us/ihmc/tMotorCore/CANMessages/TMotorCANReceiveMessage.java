@@ -64,7 +64,7 @@ public class TMotorCANReceiveMessage
         desiredTorque = Math.min(Math.max(MIN_TORQUE, desiredTorque), MAX_TORQUE);
         int desiredPositionInt = CANTools.float_to_uint(desiredPosition, MIN_POSITION, MAX_POSITION, 16);
         int desiredVelocityInt = CANTools.float_to_uint(desiredVelocity, MIN_VELOCITY, MAX_VELOCITY, 12);
-        int desiredTorqueInt = CANTools.float_to_uint(desiredTorque, MIN_VELOCITY, MAX_VELOCITY, 12);
+        int desiredTorqueInt = CANTools.float_to_uint(desiredTorque, MIN_TORQUE, MAX_TORQUE, 12);
         int kpInt = CANTools.float_to_uint(kp, 0, MAXIMUM_KP, 12);
         int kdInt = CANTools.float_to_uint(kd, 0, MAXIMUM_KD, 12);
 

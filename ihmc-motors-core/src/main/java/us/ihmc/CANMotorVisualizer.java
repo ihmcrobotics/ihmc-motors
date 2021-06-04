@@ -15,34 +15,6 @@ public class CANMotorVisualizer implements SCSVisualizerStateListener, YoVariabl
     private static final int DEFAULT_BUFFER_SIZE = 10000;
     private static final int DEFAULT_UPDATE_RATE = 0;
 
-    // Data received via CAN
-//    private YoInteger measuredTemperature;
-    private YoInteger measuredEncoderPosition;
-    private YoDouble measuredActuatorPosition;
-    private YoDouble measuredVelocity;
-    private YoDouble measuredTorque;
-    private YoDouble measuredFilteredVelocity;
-//    private YoInteger tickCounter;
-    private YoInteger motorPositionKp;
-//    private YoInteger motorPositionKi;
-    private YoInteger motorVelocityKd;
-//    private YoInteger motorVelocityKi;
-//    private YoInteger motorTorqueKp;
-//    private YoInteger motorTorqueKi;
-
-//    private YoDouble maximumActuatorSpeed;
-//    private YoInteger maximumMotorSpeed;
-
-    // settings that can be changed
-    private YoDouble velocityFilterCoefficient;
-
-    // desired commands
-    private YoDouble desiredActuatorPosition;
-    private YoDouble desiredActuatorVelocity;
-
-    // control settings
-    private YoBoolean positionControlEnabled;
-
     public CANMotorVisualizer()
     {
         SCSVisualizer scsVisualizer = new SCSVisualizer(DEFAULT_BUFFER_SIZE);

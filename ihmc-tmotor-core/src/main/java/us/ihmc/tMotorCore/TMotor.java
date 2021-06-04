@@ -8,10 +8,14 @@ import us.ihmc.tMotorCore.parameters.TMotorParameters;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
+import us.ihmc.yoVariables.variable.YoEnum;
 import us.ihmc.yoVariables.variable.YoInteger;
 
 public class TMotor extends CANMotor
 {
+   private enum MotorControlMode{POSITION, TORQUE}
+   private final YoEnum<MotorControlMode> controlMode;
+
    // Command messages for T-Motor
    private final TMotorCANReceiveMessage motorReceiveMsg;      // CAN message sent to motor
    private final TMotorCANReplyMessage motorReplyMsg;          // CAN message reply from motor
@@ -32,6 +36,9 @@ public class TMotor extends CANMotor
       TMotorParameters encoderParameters = version.getMotorParameters();
       motorReceiveMsg =  new TMotorCANReceiveMessage(ID, encoderParameters);
       motorReplyMsg = new TMotorCANReplyMessage(encoderParameters);
+
+      controlMode = new YoEnum<>("controlMode", registry, MotorControlMode.class);
+      controlMode.set(MotorControlMode.POSITION);
 
       velocityFilterCoefficient.setVariableBounds(0.0, 1.0);
       velocityFilterCoefficient.set(0.2);
@@ -69,8 +76,25 @@ public class TMotor extends CANMotor
    @Override
    public void update()
    {
-      desiredActuatorPosition.set(functionGenerator.getValue());
-      desiredActuatorVelocity.set(functionGenerator.getValueDot());
+      switch (controlMode.getEnumValue())
+      {
+         case POSITION:
+            desiredActuatorPosition.set(functionGenerator.getValue());
+            desiredActuatorVelocity.set(functionGenerator.getValueDot());
+            desiredActuatorTorque.set(0.0);
+            break;
+
+         case TORQUE:
+            desiredActuatorPosition.set(0.0);
+            desiredActuatorVelocity.set(0.0);
+            desiredActuatorTorque.set(functionGenerator.getValue());
+            break;
+         default:
+            desiredActuatorPosition.set(0.0);
+            desiredActuatorVelocity.set(0.0);
+            desiredActuatorTorque.set(0.0);
+            break;
+      }
    }
 
    @Override
@@ -101,7 +125,7 @@ public class TMotor extends CANMotor
       int kd = motorVelocityKd.getIntegerValue();
       float desiredPosition = (float) desiredActuatorPosition.getDoubleValue();
       float desiredVelocity = (float) desiredActuatorVelocity.getDoubleValue();
-      float desiredTorque = 0.0f;
+      float desiredTorque = (float) -desiredActuatorTorque.getDoubleValue();
 
       motorReceiveMsg.parseAndPackControlMsg(desiredPosition, desiredVelocity, desiredTorque, kp, kd);
       yoCANMsg.setSent(motorReceiveMsg.getControlMotorCommandData());
