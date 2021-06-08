@@ -1,7 +1,6 @@
 package us.ihmc.sensors.LoadStarILoad.settings;
 
-import LoadStarILoad.serial.ByteManipulationTools;
-
+import us.ihmc.sensors.LoadStarILoad.serial.ByteManipulationTools;
 
 public enum LoadStarILoadCommandEnum
 {

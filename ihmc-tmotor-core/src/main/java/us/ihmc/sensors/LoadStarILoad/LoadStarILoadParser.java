@@ -1,7 +1,7 @@
 package us.ihmc.sensors.LoadStarILoad;
 
-import LoadStarILoad.serial.ByteParser;
-import LoadStarILoad.settings.LoadStarILoadCommandEnum;
+import us.ihmc.sensors.LoadStarILoad.serial.ByteParser;
+import us.ihmc.sensors.LoadStarILoad.settings.LoadStarILoadCommandEnum;
 
 public class LoadStarILoadParser implements ByteParser
 {

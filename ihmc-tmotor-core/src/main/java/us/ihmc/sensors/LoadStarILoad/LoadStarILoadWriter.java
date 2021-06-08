@@ -3,8 +3,8 @@ package us.ihmc.sensors.LoadStarILoad;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import LoadStarILoad.serial.SerialPortTools;
-import LoadStarILoad.settings.LoadStarILoadCommandEnum;
+import us.ihmc.sensors.LoadStarILoad.serial.SerialPortTools;
+import us.ihmc.sensors.LoadStarILoad.settings.LoadStarILoadCommandEnum;
 
 public class LoadStarILoadWriter
 {
