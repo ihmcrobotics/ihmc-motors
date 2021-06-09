@@ -1,44 +1,44 @@
 package us.ihmc.sensors.LoadStarILoad.serial;
 
+import jssc.SerialPort;
+import jssc.SerialPortException;
+
 import java.io.IOException;
-import java.io.InputStream;
 
 public class SerialPortReader implements Runnable
 {
-   private final InputStream inputStream;
+   private final SerialPort serialPort;
    private final ByteParser parser;
    private boolean isConnected = true;
-   
-   public SerialPortReader(InputStream inputStream, ByteParser parser)
-   {
-      this.inputStream = inputStream;
+
+   public SerialPortReader(SerialPort serialPort, ByteParser parser) {
+      this.serialPort = serialPort;
       this.parser = parser;
    }
 
    public void run()
    {
-      int byteValue = -1;
       try{
          System.out.println("Starting Serial port reader thread");
          
          while (isConnected)
          {
-            if ((byteValue = inputStream.read()) > -1)
-            {
-               parser.parseByte(byteValue);
+            int [] byteArray = serialPort.readIntArray();
+            if (byteArray != null) {
+               for(int byteValue : byteArray)
+                  parser.parseByte(byteValue);
             }
          }
       }
-      catch (IOException e)
+      catch (SerialPortException e)
       {
          e.printStackTrace();
          throw new RuntimeException("Cannot read serial port");
       }
    }
 
-   public void disconnect() throws IOException
-   {
+   public void disconnect() throws IOException, SerialPortException {
       isConnected = false;
-      inputStream.close();
+      serialPort.closePort();
    }
 }

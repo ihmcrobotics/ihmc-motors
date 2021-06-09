@@ -3,36 +3,22 @@ package us.ihmc.sensors.LoadStarILoad.serial;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Enumeration;
 
-import gnu.io.CommPort;
-import gnu.io.CommPortIdentifier;
-import gnu.io.NoSuchPortException;
-import gnu.io.SerialPort;
+import jssc.SerialPort;
+import jssc.SerialPortException;
+import jssc.SerialPortList;
 import us.ihmc.realtime.PriorityParameters;
 import us.ihmc.realtime.RealtimeThread;
 
 
 public class SerialPortTools
 {
+   private static SerialPortList serialPortList;
    @SuppressWarnings("unchecked")
    public static void printSerialPortNames()
    {
-      Enumeration<CommPortIdentifier> portEnumeration;
-      ArrayList<String> portList = new ArrayList<String>();
-      portEnumeration = CommPortIdentifier.getPortIdentifiers();
-
-      CommPortIdentifier portId;
-      while (portEnumeration.hasMoreElements())
-      {
-         portId = portEnumeration.nextElement();
-
-         if (portId.getPortType() == CommPortIdentifier.PORT_SERIAL)
-         {
-            portList.add(portId.getName());
-         }
-      }
+      serialPortList = new SerialPortList();
+      String[] portList = serialPortList.getPortNames();
 
       System.out.println("Serial ports:");
 
@@ -49,20 +35,9 @@ public class SerialPortTools
 
       try
       {
-         CommPortIdentifier portIdentifier = CommPortIdentifier.getPortIdentifier(portName);
-         if (portIdentifier.isCurrentlyOwned())
-         {
-             System.err.println("Error: Port is currently in use");
-         }
-         CommPort commPort = portIdentifier.open(className, timeOut);
-         if (!(commPort instanceof SerialPort))
-         {
-            throw new NoSuchPortException();
-         }
-
-         serialPort = (SerialPort) commPort;
-
-         serialPort.setSerialPortParams(baudRate, dataBits, stopBits, parity);
+         serialPort = new SerialPort(portName);
+         serialPort.openPort();
+         serialPort.setParams(baudRate, dataBits, stopBits, parity);
          serialPort.setFlowControlMode(flowControlMode);
       }
       catch (Exception e)
@@ -73,9 +48,8 @@ public class SerialPortTools
       return serialPort;
    }
    
-   public static void closeSerialPort(SerialPort serialPort)
-   {
-      serialPort.close();
+   public static void closeSerialPort(SerialPort serialPort) throws SerialPortException {
+      serialPort.closePort();
    }
 
    public static void sendByte(int b1, OutputStream outputStream)
@@ -93,6 +67,21 @@ public class SerialPortTools
          }
       }
       catch (IOException e)
+      {
+         e.printStackTrace();
+      }
+   }
+
+   public static void sendByteArray(int[] cmd, SerialPort serialPort)
+   {
+      try
+      {
+         for (int outByte : cmd)
+         {
+            serialPort.writeInt(outByte);
+         }
+      }
+      catch (SerialPortException e)
       {
          e.printStackTrace();
       }

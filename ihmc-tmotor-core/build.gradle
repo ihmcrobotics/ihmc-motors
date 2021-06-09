@@ -16,10 +16,17 @@ ihmc {
 
 mainDependencies {
    api("us.ihmc:ihmc-motors-core:source")
-   api("org.openmuc:jrxtx:1.0.1")
+   api("org.scream3r:jssc:2.8.0")
    api("us.ihmc:ihmc-commons:0.30.4")
    api("us.ihmc:ihmc-realtime:1.3.1")
    api("us.ihmc:euclid:0.16.2")
+
+//   api("us.ihmc:ihmc-ethercat-master:0.11.4")
+//   api("us.ihmc:ihmc-robot-data-logger:0.20.7")
+//   api("us.ihmc:ihmc-avatar-interfaces:source")
+
+   api("us.ihmc:ihmc-robot-data-visualizer:source")
+   api("us.ihmc:simulation-construction-set-tools:source")
 }
 
 testDependencies {
