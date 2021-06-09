@@ -37,7 +37,7 @@ public class TMotor extends CANMotor
       motorReceiveMsg =  new TMotorCANReceiveMessage(ID, encoderParameters);
       motorReplyMsg = new TMotorCANReplyMessage(encoderParameters);
 
-      controlMode = new YoEnum<>("controlMode", registry, MotorControlMode.class);
+      controlMode = new YoEnum<>(prefix + "controlMode", registry, MotorControlMode.class);
       controlMode.set(MotorControlMode.POSITION);
 
       velocityFilterCoefficient.setVariableBounds(0.0, 1.0);

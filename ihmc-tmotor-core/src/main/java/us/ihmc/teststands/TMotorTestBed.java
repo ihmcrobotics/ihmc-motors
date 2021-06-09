@@ -1,15 +1,18 @@
 package us.ihmc.teststands;
 
+import gnu.trove.map.hash.TIntObjectHashMap;
 import peak.can.basic.*;
 import us.ihmc.commons.Conversions;
 import us.ihmc.realtime.*;
 import us.ihmc.robotDataLogger.YoVariableServer;
 import us.ihmc.robotDataLogger.logger.DataServerSettings;
+import us.ihmc.tMotorCore.CANMessages.TMotorCANReplyMessage;
 import us.ihmc.tMotorCore.TMotor;
 import us.ihmc.tMotorCore.TMotorVersion;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
+import us.ihmc.yoVariables.variable.YoInteger;
 import us.ihmc.yoVariables.variable.YoLong;
 
 import static peak.can.basic.TPCANStatus.PCAN_ERROR_QRCVEMPTY;
@@ -36,8 +39,10 @@ public class TMotorTestBed extends RealtimeThread
    private final YoLong writeErrorCounter = new YoLong("writeErrorCounter", registry);
 
    // motors in CAN bus
-   private final TMotor motor;
-   private static final int CAN_ID = 1;
+   private final TIntObjectHashMap<TMotor> motors = new TIntObjectHashMap<>();
+   private int[] motorIDs;
+   private static final int SHOULDER_CAN_ID = 1;
+//   private static final int ELBOW_CAN_ID = 3;
 
    // CAN-related goodies
    private PCANBasic can = new PCANBasic();
@@ -48,6 +53,9 @@ public class TMotorTestBed extends RealtimeThread
    // specialized YoVariables
    private final YoBoolean enableCANMsgs = new YoBoolean("enableCANMsgs", registry);
    private final YoBoolean resetCounters = new YoBoolean("resetCounters", registry);
+
+   // debug
+   private final YoInteger messagesInReadBus = new YoInteger("messagesInBus", registry);
    
 
    public TMotorTestBed(YoVariableServer yoVariableServer)
@@ -59,7 +67,11 @@ public class TMotorTestBed extends RealtimeThread
       this.yoVariableServer = yoVariableServer;
       yoVariableServer.setMainRegistry(registry, null);
 
-      motor = new TMotor(CAN_ID, TMotorVersion.AK109, DT, yoTime, registry);
+      TMotor shoulderMotor = new TMotor(SHOULDER_CAN_ID, TMotorVersion.AK109, DT, yoTime, registry);
+//      TMotor elbowMotor = new TMotor(ELBOW_CAN_ID, TMotorVersion.AK109, DT, yoTime, registry);
+      motors.put(shoulderMotor.getID(), shoulderMotor);
+//      motors.put(elbowMotor.getID(), elbowMotor);
+      motorIDs = motors.keys();
 
       receivedMsg.setLength((byte) 6);
       enableCANMsgs.set(true);
@@ -127,13 +139,15 @@ public class TMotorTestBed extends RealtimeThread
    {
       TPCANStatus readStatus = can.Read(channel, receivedMsg, null);
 
+      messagesInReadBus.set(0);
       while(readStatus != PCAN_ERROR_QRCVEMPTY)
       {
          if (readStatus == TPCANStatus.PCAN_ERROR_OK)
          {
-//            int id = TMotorCANReplyMessage.getID(receivedMsg);
-//            if(motors.containsKey(id))
-            motor.read(receivedMsg);
+            int id = TMotorCANReplyMessage.getID(receivedMsg);
+            if(motors.containsKey(id))
+               motors.get(id).read(receivedMsg);
+            messagesInReadBus.increment();
          }
          else
          {
@@ -145,16 +159,22 @@ public class TMotorTestBed extends RealtimeThread
 
    private void compute()
    {
-      motor.update();
+      for(int id = 0; id < motorIDs.length; id++)
+      {
+         motors.get(motorIDs[id]).update();
+      }
    }
 
    private void write()
    {
-      TPCANMsg motorCommand = motor.write();
-      status = can.Write(channel, motorCommand);
-      if (status != TPCANStatus.PCAN_ERROR_OK)
+      for(int id = 0; id < motorIDs.length; id++)
       {
-         writeErrorCounter.increment();
+         TPCANMsg motorCommand = motors.get(motorIDs[id]).write();
+         status = can.Write(channel, motorCommand);
+         if (status != TPCANStatus.PCAN_ERROR_OK)
+         {
+            writeErrorCounter.increment();
+         }
       }
    }
 

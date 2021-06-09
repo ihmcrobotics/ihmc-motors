@@ -6,8 +6,8 @@ public class TMotorAK109Parameters implements TMotorParameters
     private static final float MAX_POSITION = 12.5f;
     private static final float MIN_VELOCITY = -46.57f;  // -23.24 for 24V and -46.57 for 48 V
     private static final float MAX_VELOCITY = 46.57f;   // 23.24 for 24V and 46.57 for 48 V
-    private static final float MIN_TORQUE = -16.0f;     //TODO check if better with -9
-    private static final float MAX_TORQUE = 16.0f;      //TODO check
+    private static final float MIN_TORQUE = -16.0f;
+    private static final float MAX_TORQUE = 16.0f;
 
     private final static float MAXIMUM_KP = 500;
     private final static float MAXIMUM_KD = 100;

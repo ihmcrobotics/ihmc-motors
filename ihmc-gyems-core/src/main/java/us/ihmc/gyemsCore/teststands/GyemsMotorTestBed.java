@@ -57,6 +57,7 @@ public class GyemsMotorTestBed extends RealtimeThread
 
    //debug
    private final YoBoolean justRead = new YoBoolean("justRead", registry);
+   private final YoInteger messagesInReadBus = new YoInteger("messagesInBus", registry);
 
    public GyemsMotorTestBed(YoVariableServer yoVariableServer)
    {
@@ -68,7 +69,6 @@ public class GyemsMotorTestBed extends RealtimeThread
       yoVariableServer.setMainRegistry(registry, null);
 
       motor = new GyemsMotor(RMDX8_CAN_ID, DT, yoTime, registry);
-//      TMotor yoTmotorAK809 = new TMotor(AK809_CAN_ID, TMotorVersion.AK809, DT, yoTime, registry);
 
       justRead.set(false);
       receivedMsg.setLength((byte) 6);
@@ -156,11 +156,13 @@ public class GyemsMotorTestBed extends RealtimeThread
    {
       TPCANStatus readStatus = can.Read(channel, receivedMsg, null);
 
+      messagesInReadBus.set(0);
       while(readStatus != PCAN_ERROR_QRCVEMPTY)
       {
          if (readStatus == TPCANStatus.PCAN_ERROR_OK)
          {
             motor.read(receivedMsg);
+            messagesInReadBus.increment();
          }
          else
          {
