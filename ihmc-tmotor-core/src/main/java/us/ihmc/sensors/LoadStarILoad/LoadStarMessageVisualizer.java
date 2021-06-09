@@ -4,8 +4,8 @@ import javax.swing.JLabel;
 import javax.swing.JToggleButton;
 import javax.swing.event.ChangeEvent;
 
-import gnu.io.SerialPort;
-import gnu.io.SerialPortEventListener;
+import jssc.SerialPort;
+import jssc.SerialPortEventListener;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;

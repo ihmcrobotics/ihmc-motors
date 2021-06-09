@@ -7,7 +7,7 @@ public class LoadstarILoadByteManipulationTools
    private static final int SPACE_BYTE = ' ';
    private static final int MINUS_BYTE = '-';
    private static final int ASCII_START_OF_NUMBERS = 48;
-   public static final int DO_WEIGHT_BUFFER_LENGTH = 9; //was 12, didn't work until we changed to 9
+   public static final int DO_WEIGHT_BUFFER_LENGTH = 9; //was 12, didn't work until we changed to 9. Changed to 8 for jssc
 
    public static boolean isAcknowledgement(int[] byteBuffer, int lengthOfValidData)
    {

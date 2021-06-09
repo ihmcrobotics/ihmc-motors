@@ -4,7 +4,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import gnu.io.SerialPort;
+import jssc.SerialPort;
+import jssc.SerialPortException;
 import us.ihmc.realtime.PriorityParameters;
 import us.ihmc.sensors.LoadStarILoad.serial.SerialPortReader;
 import us.ihmc.sensors.LoadStarILoad.serial.SerialPortTools;
@@ -38,23 +39,23 @@ public class LoadStarILoad
       serialPort = SerialPortTools.openSerialPort(portName, this.getClass().getName(), BAUDRATE, SerialPort.DATABITS_8, SerialPort.STOPBITS_1,
               SerialPort.PARITY_NONE, SerialPort.FLOWCONTROL_NONE, TIMEOUT);
 
-      InputStream inputStream = serialPort.getInputStream();
-      OutputStream outputStream = serialPort.getOutputStream();
+//      InputStream inputStream = serialPort.getInputStream();
+//      OutputStream outputStream = serialPort.getOutputStream();
 
-      loadStarILoadWriter = new LoadStarILoadWriter(outputStream);
+      loadStarILoadWriter = new LoadStarILoadWriter(serialPort);
 
       loadStarILoadCallback = new LoadStarILoadCallback();
       parser = new LoadStarILoadParser(loadStarILoadCallback);
       //PriorityParameters priorityParameters = new PriorityParameters(PriorityParameters.getMaximumPriority()); //cant find these
-      serialPortReader = new SerialPortReader(inputStream, parser);
+      serialPortReader = new SerialPortReader(serialPort, parser);
       SerialPortTools.createReaderThread(serialPortReader); //changed from: (serialPortReader, priorityParameters)
    }
 
-   public void disconnect() throws IOException
-   {
-      loadStarILoadWriter.disconnect();
-      serialPortReader.disconnect();
+   public void disconnect() throws IOException, SerialPortException {
+//      loadStarILoadWriter.disconnect();
+//      serialPortReader.disconnect();
 //      SerialPortTools.closeSerialPort(serialPort);
+      serialPort.closePort();
    }
 
    public void ping()
@@ -139,7 +140,7 @@ public class LoadStarILoad
             {
                disconnect();
             }
-            catch (IOException e)
+            catch (IOException | SerialPortException e)
             {
                // do nothing
             }

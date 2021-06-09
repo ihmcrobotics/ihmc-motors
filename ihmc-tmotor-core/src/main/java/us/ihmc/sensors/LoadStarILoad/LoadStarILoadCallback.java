@@ -1,5 +1,6 @@
 package us.ihmc.sensors.LoadStarILoad;
 
+import us.ihmc.tools.*;
 
 public class LoadStarILoadCallback
 {
@@ -25,15 +26,12 @@ public class LoadStarILoadCallback
 
    public void doWeight(int[] byteBuffer, int lengthOfValidData)
    {
+
       if (lengthOfValidData != LoadstarILoadByteManipulationTools.DO_WEIGHT_BUFFER_LENGTH)
          throw new RuntimeException("LoadStarILoadCallback: Bad weight data! lengthOfValidData: " + lengthOfValidData);
       forceMilliPounds = LoadstarILoadByteManipulationTools.loadStarByteArrayToInt(byteBuffer);
       forceNewton = forceMilliPounds * MILLIPOUND_TO_NEWTON;
 
-//    ArrayTools.printArray(byteBuffer, System.out);
-//    System.out.println(loadMilliPounds);
-//    System.out.println(loadNewton);
-//    System.out.println();
 
       sleep(1L);
    }

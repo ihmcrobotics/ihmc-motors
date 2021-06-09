@@ -17,7 +17,7 @@ ihmc {
 mainDependencies {
    api("us.ihmc:ihmc-motors-core:source")
    api("us.ihmc:ihmc-ethercat-master:0.12.0")
-   api("org.openmuc:jrxtx:1.0.1")
+   api("org.scream3r:jssc:2.8.0")
 }
 
 testDependencies {

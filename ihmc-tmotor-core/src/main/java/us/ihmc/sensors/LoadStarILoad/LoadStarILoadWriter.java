@@ -1,27 +1,22 @@
 package us.ihmc.sensors.LoadStarILoad;
 
-import java.io.IOException;
-import java.io.OutputStream;
-
+import jssc.SerialPort;
+import jssc.SerialPortException;
 import us.ihmc.sensors.LoadStarILoad.serial.SerialPortTools;
 import us.ihmc.sensors.LoadStarILoad.settings.LoadStarILoadCommandEnum;
 
 public class LoadStarILoadWriter
 {
-   private final OutputStream outputStream;
+   private final SerialPort serialPort;
 
-   public LoadStarILoadWriter(OutputStream outputStream)
-   {
-      this.outputStream = outputStream;
-   }
+   public LoadStarILoadWriter(SerialPort serialPort) { this.serialPort = serialPort; }
 
-   public void disconnect() throws IOException
-   {
-      outputStream.close();
+   public void disconnect() throws SerialPortException {
+      serialPort.closePort();
    }
 
    public void sendCommand(LoadStarILoadCommandEnum commandEnum)
    {
-      SerialPortTools.sendByteArray(commandEnum.getCommand(), outputStream);
+      SerialPortTools.sendByteArray(commandEnum.getCommand(), serialPort);
    }
 }
