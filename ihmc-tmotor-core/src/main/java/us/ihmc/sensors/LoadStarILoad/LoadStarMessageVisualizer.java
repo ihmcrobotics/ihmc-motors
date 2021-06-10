@@ -60,7 +60,7 @@ public class LoadStarMessageVisualizer implements SCSVisualizerStateListener, ja
    }
 
    @Override
-   public void starting(SimulationConstructionSet scs, Robot robot, YoRegistry registry) throws IOException
+   public void starting(SimulationConstructionSet scs, Robot robot, YoRegistry registry)
    {
       LogTools.info("Starting iLoad visualizer");
       scs.setFastSimulate(true);
