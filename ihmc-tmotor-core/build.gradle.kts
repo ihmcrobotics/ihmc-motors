@@ -10,13 +10,14 @@ ihmc {
    loadProductProperties("../product.properties")
 
    configureDependencyResolution()
-   repository("https://artifactory.ihmc.us/artifactory/proprietary-releases/") //, artifactoryUsername, artifactoryPassword)
+   repository("https://artifactory.ihmc.us/artifactory/proprietary-releases/")//, artifactoryUsername, artifactoryPassword)
    configurePublications()
 }
 
 mainDependencies {
    api("us.ihmc:ihmc-motors-core:source")
    api("us.ihmc:ihmc-ethercat-master:0.12.0")
+   api("us.ihmc:ihmc-realtime:1.3.1")
    api("org.scream3r:jssc:2.8.0")
 }
 
@@ -28,6 +29,7 @@ tasks.getByPath("installDist").dependsOn("compositeJar")
 
 app.entrypoint("TMotorKtTestBed", "us.ihmc.teststands.TMotorKtTestBed")
 app.entrypoint("TMotorTestBed", "us.ihmc.teststands.TMotorTestBed")
+app.entrypoint("LoadStarTestBed", "us.ihmc.sensors.LoadStarILoad.testbed.LoadStarTestBed")
 
 tasks.create("deploy") {
    dependsOn("installDist")
@@ -38,6 +40,7 @@ tasks.create("deploy") {
                  put(file("build/install/${project.name}").toString(), "isa-testbed")
                  exec("chmod +x isa-testbed/bin/TMotorKtTestBed")
                  exec("chmod +x isa-testbed/bin/TMotorTestBed")
+                 exec("chmod +x isa-testbed/bin/LoadStarTestBed")
               }
    }
 }

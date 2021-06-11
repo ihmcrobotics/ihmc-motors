@@ -19,7 +19,6 @@ public class LoadStarILoadParser implements ByteParser
    public void parseByte(int i)
    {
 
-
       if (isNewLine(i))
          return;    // don't know why these get sent
 
@@ -110,5 +109,10 @@ public class LoadStarILoadParser implements ByteParser
    public void expectCommand(LoadStarILoadCommandEnum command)
    {
       this.expectedCommand = command;
+   }
+
+   public double getForce()
+   {
+      return loadStarILoadCallback.getForceNewton();
    }
 }
