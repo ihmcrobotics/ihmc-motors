@@ -23,6 +23,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+import jssc.SerialPortException;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -37,11 +38,8 @@ public class LoadStarILoadUI extends Application
    private Stage stage;
    private StackPane root;
    private LoadStarILoad load;
-   private double weightN;
-   private double weightLb;
    private final int WINDOW_SIZE = 100;
    private ScheduledExecutorService scheduledExecutorService;
-   private Date date;
 
    public static void main(String[] args) throws IOException
    {
@@ -49,8 +47,7 @@ public class LoadStarILoadUI extends Application
    }
 
    @Override
-   public void start(Stage primaryStage) throws IOException
-   {
+   public void start(Stage primaryStage) throws IOException, SerialPortException {
       initializeSerialIfNull();
 
       stage = primaryStage;
@@ -81,8 +78,7 @@ public class LoadStarILoadUI extends Application
       stage.show();
    }
 
-   private void initializeSerialIfNull() throws IOException
-   {
+   private void initializeSerialIfNull() throws IOException, SerialPortException {
       if(load == null)
       {
          load = new LoadStarILoad(COM_PORT);
