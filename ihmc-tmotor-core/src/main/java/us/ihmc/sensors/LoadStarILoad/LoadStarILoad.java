@@ -4,12 +4,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import jssc.SerialPort;
 import jssc.SerialPortException;
-import us.ihmc.realtime.PriorityParameters;
 import us.ihmc.sensors.LoadStarILoad.serial.SerialPortReader;
 import us.ihmc.sensors.LoadStarILoad.serial.SerialPortTools;
 import us.ihmc.sensors.LoadStarILoad.settings.LoadStarILoadCommandEnum;
+import us.ihmc.yoVariables.registry.YoRegistry;
 
 /**
  * See http://www.loadstarsensors.com/hyperterminal.html
@@ -25,21 +27,50 @@ public class LoadStarILoad
    private LoadStarILoadParser parser;
    private LoadStarILoadCallback loadStarILoadCallback;
 
-   public LoadStarILoad(String portName) throws IOException
-   {
+   private Double force;
+   private StringProperty forceString = new SimpleStringProperty("");
+
+   public LoadStarILoad(String portName) throws IOException, SerialPortException {
       SerialPortTools.printSerialPortNames();
       connect(portName);
       addShutdownHook();
    }
 
-   public void connect(String portName) throws IOException
-   {
+   public LoadStarILoad(String portName, YoRegistry registry) throws IOException, SerialPortException {
+      SerialPortTools.printSerialPortNames();
+      connect(portName);
+      addShutdownHook();
+   }
+
+   public void connect(String portName) throws IOException, SerialPortException {
       System.out.println("Attempting to open serial port: \"" + portName + "\"");
 
       serialPort = SerialPortTools.openSerialPort(portName, this.getClass().getName(), BAUDRATE, SerialPort.DATABITS_8, SerialPort.STOPBITS_1,
               SerialPort.PARITY_NONE, SerialPort.FLOWCONTROL_NONE, TIMEOUT);
 
-//      InputStream inputStream = serialPort.getInputStream();
+//      serialPort.setEventsMask('A');
+//      serialPort.addEventListener(e ->
+//      {
+//         if (e.isRXCHAR())
+//         {
+//            int[] byteArray = new int[0];
+//            try {
+//               byteArray = serialPort.readIntArray();
+//            } catch (SerialPortException ex) {
+//               ex.printStackTrace();
+//            }
+//            if (byteArray != null) {
+//               for (int byteValue : byteArray)
+//                  parser.parseByte(byteValue);
+//               force = parser.getForce();
+//               forceString.set(force.toString());
+//               System.out.println(forceString);
+//            }
+//         }
+//      });
+
+
+      //      InputStream inputStream = serialPort.getInputStream();
 //      OutputStream outputStream = serialPort.getOutputStream();
 
       loadStarILoadWriter = new LoadStarILoadWriter(serialPort);
@@ -106,6 +137,10 @@ public class LoadStarILoad
    public double getForcePound() {
       return loadStarILoadCallback.getForcePound();
    }
+
+   public SerialPort getSerialPort() {
+      return serialPort;
+   }
    
    private void doCommand(LoadStarILoadCommandEnum command)
    {
@@ -149,4 +184,15 @@ public class LoadStarILoad
       Thread hook = new Thread(shutdownHookRunnable);
       Runtime.getRuntime().addShutdownHook(hook);
    }
+
+   public StringProperty getLine()
+   {
+      return forceString;
+   }
+
+   public SerialPortReader getSerialPortReader()
+   {
+      return serialPortReader;
+   }
+
 }
