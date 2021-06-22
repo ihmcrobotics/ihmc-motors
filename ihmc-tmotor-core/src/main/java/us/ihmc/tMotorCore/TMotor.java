@@ -13,8 +13,10 @@ import us.ihmc.yoVariables.variable.YoInteger;
 
 public class TMotor extends CANMotor
 {
-   private enum MotorControlMode{POSITION, TORQUE}
+//   private final TMotorController controller;
+   public enum MotorControlMode{POSITION, TORQUE}
    private final YoEnum<MotorControlMode> controlMode;
+   private static final double UNSAFE_SPEED = 6.0;
 
    // Command messages for T-Motor
    private final TMotorCANReceiveMessage motorReceiveMsg;      // CAN message sent to motor
@@ -37,7 +39,8 @@ public class TMotor extends CANMotor
       motorReceiveMsg =  new TMotorCANReceiveMessage(ID, encoderParameters);
       motorReplyMsg = new TMotorCANReplyMessage(encoderParameters);
 
-      controlMode = new YoEnum<>(prefix + "controlMode", registry, MotorControlMode.class);
+//      controller = new TMotorController(prefix, parentRegistry);
+      controlMode = new YoEnum<>(name + "controlMode", registry, MotorControlMode.class);
       controlMode.set(MotorControlMode.POSITION);
 
       velocityFilterCoefficient.setVariableBounds(0.0, 1.0);
@@ -100,6 +103,12 @@ public class TMotor extends CANMotor
    @Override
    public TPCANMsg write()
    {
+      if(motorIsInUnsafeState())
+      {
+         yoCANMsg.setSent(motorReceiveMsg.getDisableMotorCommandData());
+         return motorReceiveMsg.getDisableMotorMsg();
+      }
+
       if (sendEnableMotorCommand.getBooleanValue())
       {
          yoCANMsg.setSent(motorReceiveMsg.getEnableMotorCommandData());
@@ -125,7 +134,7 @@ public class TMotor extends CANMotor
       int kd = motorVelocityKd.getIntegerValue();
       float desiredPosition = (float) desiredActuatorPosition.getDoubleValue();
       float desiredVelocity = (float) desiredActuatorVelocity.getDoubleValue();
-      float desiredTorque = (float) -desiredActuatorTorque.getDoubleValue();
+      float desiredTorque = (float) desiredActuatorTorque.getDoubleValue();
 
       motorReceiveMsg.parseAndPackControlMsg(desiredPosition, desiredVelocity, desiredTorque, kp, kd);
       yoCANMsg.setSent(motorReceiveMsg.getControlMotorCommandData());
@@ -133,9 +142,22 @@ public class TMotor extends CANMotor
       return motorReceiveMsg.getControlMotorMsg();
    }
 
+   private boolean motorIsInUnsafeState()
+   {
+      if( Math.abs(measuredVelocity.getDoubleValue()) > UNSAFE_SPEED)
+         return true;
+
+      return false;
+   }
+
    public int getID()
    {
       return ID;
+   }
+
+   public double getDesiredTorque()
+   {
+      return desiredActuatorTorque.getDoubleValue();
    }
 
    public double getPosition()
