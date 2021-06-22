@@ -31,6 +31,7 @@ tasks.getByPath("installDist").dependsOn("compositeJar")
 app.entrypoint("TMotorKtTestBed", "us.ihmc.teststands.TMotorKtTestBed")
 app.entrypoint("TMotorTestBed", "us.ihmc.teststands.TMotorTestBed")
 app.entrypoint("LoadStarTestBed", "us.ihmc.sensors.LoadStarILoad.testbed.LoadStarTestBed")
+app.entrypoint("FootsoleTestBed", "us.ihmc.teststands.FootsoleTestBed")
 
 tasks.create("deploy") {
    dependsOn("installDist")
@@ -42,6 +43,7 @@ tasks.create("deploy") {
          exec("chmod +x isa-testbed/bin/TMotorKtTestBed")
          exec("chmod +x isa-testbed/bin/TMotorTestBed")
          exec("chmod +x isa-testbed/bin/LoadStarTestBed")
+         exec("chmod +x isa-testbed/bin/FootsoleTestBed")
       }
    }
 }
