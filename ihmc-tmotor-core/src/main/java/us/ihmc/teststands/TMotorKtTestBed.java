@@ -75,7 +75,6 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
    private TPCANStatus status = null;
    private static final int CAN_ID = 2;
 
-   private final TorqueToForceTransmission torqueToForce;
    private final YoAnalogSignalWrapper torqueSensorProcessor;
    private final ButterworthFilteredYoVariable filteredTorque;
    private final YoDouble alphaLoadcell = new YoDouble("alphaLoadcell", registry);
@@ -107,8 +106,6 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
 
       filteredTorque = new ButterworthFilteredYoVariable("filteredTorque",
               registry, alphaLoadcell, torqueSensorProcessor.getResultYoVariable(), ButterworthFilteredYoVariable.ButterworthFilterType.LOW_PASS);
-
-      torqueToForce = new TorqueToForceTransmission(0.05, registry);
    }
 
    private void initialize()
@@ -215,8 +212,8 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
       filteredTorque.update();
 
       torqueSensorProcessor.update();
+      tMotor.setMeasuredForce(filteredTorque.getDoubleValue());
       tMotor.update();
-      torqueToForce.update(tMotor.getDesiredTorque());
 
       motorWrite();
    }

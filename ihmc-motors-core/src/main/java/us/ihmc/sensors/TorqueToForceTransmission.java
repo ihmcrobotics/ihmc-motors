@@ -20,4 +20,14 @@ public class TorqueToForceTransmission
     {
         desiredForce.set(torque / MOTOR_PULLEY_RADIUS);
     }
+
+    public double getDesiredForce()
+    {
+        return desiredForce.getDoubleValue();
+    }
+
+    public double getMotorPulleyRadius()
+    {
+        return MOTOR_PULLEY_RADIUS;
+    }
 }
