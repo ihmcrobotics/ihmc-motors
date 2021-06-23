@@ -51,13 +51,6 @@ public class TMotorTestBed extends RealtimeThread
    private final TPCANMsg receivedMsg = new TPCANMsg();
    private TPCANStatus status = null;
 
-   // serial communication
-   private static final String COMPort = "/dev/ttyUSB0";   // or "COM10" on exo OCU; /dev/ttyACM0
-   private final SerialLoadcell serial = new SerialLoadcell(COMPort);
-   private boolean readOnLastTick = true;
-   private final YoBoolean readLoadCell = new YoBoolean("readLoadCell", registry);
-   private final YoDouble measuredForceN = new YoDouble("measuredForceN", registry);
-
    // specialized YoVariables
    private final YoBoolean enableCANMsgs = new YoBoolean("enableCANMsgs", registry);
    private final YoBoolean resetCounters = new YoBoolean("resetCounters", registry);
@@ -85,17 +78,8 @@ public class TMotorTestBed extends RealtimeThread
       enableCANMsgs.set(true);
    }
 
-   private void startSerialConnection()
-   {
-      serial.connect();
-      readLoadCell.set(false);
-   }
-
-
    private void initialize()
    {
-      startSerialConnection();
-
       if (!can.initializeAPI())
       {
          System.out.println("Unable to initialize the API");
@@ -172,18 +156,6 @@ public class TMotorTestBed extends RealtimeThread
          }
          readStatus = can.Read(channel, receivedMsg, null);
       }
-
-      // read iLoadPro load cell
-      if(readLoadCell.getBooleanValue())
-      {
-         if(readOnLastTick)
-         {
-            serial.outputWeightOnce();
-            measuredForceN.set(serial.readForce());
-         }
-         readOnLastTick= !readOnLastTick;
-      }
-
    }
 
    private void compute()
