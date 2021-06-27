@@ -18,7 +18,6 @@ mainDependencies {
    api("us.ihmc:ihmc-motors-core:source")
    api("us.ihmc:ihmc-ethercat-master:0.12.0")
    api("us.ihmc:ihmc-realtime:1.3.1")
-   api("us.ihmc:lan-9252-drivers:0.1.0")
    api("org.scream3r:jssc:2.8.0")
 }
 
