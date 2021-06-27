@@ -2,9 +2,7 @@ package us.ihmc.teststands;
 
 import us.ihmc.commons.Conversions;
 import us.ihmc.etherCAT.master.EtherCATRealtimeThread;
-import us.ihmc.etherCAT.master.Slave;
-import us.ihmc.etherCAT.slaves.beckhoff.EK1100;
-import us.ihmc.lan9252.LAN9252Slave;
+import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.log.LogTools;
 import us.ihmc.process.LinuxProcess;
 import us.ihmc.process.Scheduler;
@@ -14,11 +12,11 @@ import us.ihmc.realtime.MonotonicTime;
 import us.ihmc.realtime.PriorityParameters;
 import us.ihmc.robotDataLogger.YoVariableServer;
 import us.ihmc.robotDataLogger.logger.DataServerSettings;
-import us.ihmc.robotics.math.filters.ButterworthFilteredYoVariable;
-import us.ihmc.tMotorCore.TMotor;
+import us.ihmc.sensors.footsole.EtherCATPressureSensor;
+import us.ihmc.sensors.footsole.EvaFootsole;
+import us.ihmc.sensors.footsole.YoEtherCATPressureSensor;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
-import us.ihmc.yoVariables.variable.YoEnum;
 import us.ihmc.yoVariables.variable.YoInteger;
 import us.ihmc.yoVariables.variable.YoLong;
 
@@ -52,13 +50,9 @@ public class FootsoleTestBed extends EtherCATRealtimeThread
     private final YoLong writeErrorCounter = new YoLong("writeErrorCounter", registry);
 
     // lan slave
-    private static final int RPDO_LENGTH = 1;  //2
-    private static final int TPDO_LENGTH = 4;  //3
-    private final LAN9252Slave lan9252Slave;
-    private int[] rxFrameData = new int[RPDO_LENGTH];   // slave rx
-    private final YoInteger firstIntInSensor = new YoInteger("firstIntInSensor", registry);
-    private final YoInteger secondIntInSensor = new YoInteger("secondIntInSensor", registry);
-    private int[] txFrameData = new int[TPDO_LENGTH];   // slave tx
+    private final YoEtherCATPressureSensor yoPressureArraySensor;
+    private final EtherCATPressureSensor lan9252Slave;
+    private final EvaFootsole footsole;
 
     public FootsoleTestBed(String iface, MonotonicTime period, boolean enableDC, YoVariableServer yoVariableServer) throws IOException
     {
@@ -67,10 +61,19 @@ public class FootsoleTestBed extends EtherCATRealtimeThread
         setEtherCATPriorityForInterface(iface);
         CPUDMALatency.setLatency(0);
 
+        YoGraphicsListRegistry yoGraphicsListRegistry = new YoGraphicsListRegistry();
         this.yoVariableServer = yoVariableServer;
-        yoVariableServer.setMainRegistry(registry, null);
 
-        lan9252Slave = new LAN9252Slave(0, 0, RPDO_LENGTH, TPDO_LENGTH);
+        lan9252Slave = new EtherCATPressureSensor(0, 0);
+        yoPressureArraySensor = new YoEtherCATPressureSensor(lan9252Slave, registry);
+        yoPressureArraySensor.setCoeffs(0.0, 0.1, 1000.0);
+
+        yoVariableServer.setMainRegistry(registry, yoGraphicsListRegistry);
+//        yoGraphicsListRegistry.setYoGraphicsUpdatedRemotely(true);
+
+        double footLength = 0.28;
+        double footWidth = 0.12;
+        footsole = new EvaFootsole(footLength, footWidth, registry, yoGraphicsListRegistry);
 
         registerSlave(lan9252Slave);
     }
@@ -82,18 +85,7 @@ public class FootsoleTestBed extends EtherCATRealtimeThread
 
     private void motorRead()
     {
-        lan9252Slave.getTransmitBytes(txFrameData);
-        for(int i=0;  i < txFrameData.length; i++)
-        {
-            if(i == 0)
-            {
-                firstIntInSensor.set(txFrameData[i]);
-            }
-            else if(i ==1)
-            {
-                secondIntInSensor.set(txFrameData[i]);
-            }
-        }
+
     }
 
     private void motorWrite()
@@ -151,11 +143,12 @@ public class FootsoleTestBed extends EtherCATRealtimeThread
     @Override
     protected void doControl()
     {
-
         controllerTimeInNanos.set(getCurrentCycleTimestamp() - getInitTimestamp());
         controllerTimeInSeconds.set(Conversions.nanosecondsToSeconds(getCurrentCycleTimestamp() - getInitTimestamp()));
 
-//        yoEL3104.read();
+        yoPressureArraySensor.read();
+        footsole.updateCoP(yoPressureArraySensor.getMeasuredNormalForces());
+
         motorRead();
 
         motorWrite();
