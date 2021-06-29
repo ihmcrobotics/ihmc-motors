@@ -6,10 +6,12 @@ import us.ihmc.commons.Conversions;
 import us.ihmc.realtime.*;
 import us.ihmc.robotDataLogger.YoVariableServer;
 import us.ihmc.robotDataLogger.logger.DataServerSettings;
+import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.sensors.LoadStarILoad.serial.SerialLoadcell;
 import us.ihmc.tMotorCore.CANMessages.TMotorCANReplyMessage;
 import us.ihmc.tMotorCore.TMotor;
 import us.ihmc.tMotorCore.TMotorVersion;
+import us.ihmc.trajectories.EvaWalkingJointTrajectories;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
@@ -42,7 +44,7 @@ public class TMotorTestBed extends RealtimeThread
    // motors in CAN bus
    private final TIntObjectHashMap<TMotor> motors = new TIntObjectHashMap<>();
    private int[] motorIDs;
-   private static final int SHOULDER_CAN_ID = 1;
+   private static final int RIGHT_HIP_CAN_ID = 2;
 //   private static final int ELBOW_CAN_ID = 3;
 
    // CAN-related goodies
@@ -68,8 +70,9 @@ public class TMotorTestBed extends RealtimeThread
       this.yoVariableServer = yoVariableServer;
       yoVariableServer.setMainRegistry(registry, null);
 
-      TMotor shoulderMotor = new TMotor(SHOULDER_CAN_ID, TMotorVersion.AK109, DT, yoTime, registry);
+      TMotor shoulderMotor = new TMotor(RobotSide.RIGHT, RIGHT_HIP_CAN_ID, TMotorVersion.AK109, DT, yoTime, registry);
 //      TMotor elbowMotor = new TMotor(ELBOW_CAN_ID, TMotorVersion.AK109, DT, yoTime, registry);
+//      shoulderMotor.startTrajectoryGenerator();
       motors.put(shoulderMotor.getID(), shoulderMotor);
 //      motors.put(elbowMotor.getID(), elbowMotor);
       motorIDs = motors.keys();
@@ -91,6 +94,8 @@ public class TMotorTestBed extends RealtimeThread
       }
       status = can.Initialize(channel, TPCANBaudrate.PCAN_BAUD_1M, TPCANType.PCAN_TYPE_NONE, 0, (short) 0);
       //     can.SetRcvEvent(channel);
+
+//      motors.get(motorIDs[0]).startTrajectoryGenerator();
    }
 
    @Override
@@ -119,7 +124,7 @@ public class TMotorTestBed extends RealtimeThread
             canReadTime.set(System.nanoTime() - canReadStartTime);
 
             long computeStartTime = System.nanoTime();
-            compute();
+            compute(yoTime.getDoubleValue());
             computeTime.set(System.nanoTime() - computeStartTime);
 
             long canWriteStartTime = System.nanoTime();
@@ -158,11 +163,11 @@ public class TMotorTestBed extends RealtimeThread
       }
    }
 
-   private void compute()
+   private void compute(double time)
    {
       for(int id = 0; id < motorIDs.length; id++)
       {
-         motors.get(motorIDs[id]).update();
+         motors.get(motorIDs[id]).update(time);
       }
    }
 

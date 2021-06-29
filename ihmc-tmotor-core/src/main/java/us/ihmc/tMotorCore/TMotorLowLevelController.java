@@ -62,6 +62,11 @@ public class TMotorLowLevelController implements RobotController
         return registry;
     }
 
+    public void setDesireds(double torque)
+    {
+        setDesireds(torque, 0.0);
+    }
+
     public void setDesireds(double position, double velocity)
     {
         switch (controlMode.getEnumValue())

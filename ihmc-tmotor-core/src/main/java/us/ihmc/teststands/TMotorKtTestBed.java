@@ -18,6 +18,7 @@ import us.ihmc.realtime.PriorityParameters;
 import us.ihmc.robotDataLogger.YoVariableServer;
 import us.ihmc.robotDataLogger.logger.DataServerSettings;
 import us.ihmc.robotics.math.filters.ButterworthFilteredYoVariable;
+import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.sensors.TorqueToForceTransmission;
 import us.ihmc.tMotorCore.CANMessages.TMotorCANReplyMessage;
 import us.ihmc.tMotorCore.TMotor;
@@ -92,7 +93,7 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
       ek1100 = new EK1100(0, 0);
       analogInput = new EL3104(0, 1);
       yoEL3104 = new YoEL3104(analogInput, registry);
-      tMotor = new TMotor(CAN_ID, TMotorVersion.AK109, DT, controllerTimeInSeconds, registry);
+      tMotor = new TMotor(RobotSide.RIGHT, CAN_ID, TMotorVersion.AK109, DT, controllerTimeInSeconds, registry);
       receivedMsg.setLength((byte) 6);
       alphaLoadcell.set(0.99);
 
@@ -213,7 +214,7 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
 
       torqueSensorProcessor.update();
       tMotor.setMeasuredForce(filteredTorque.getDoubleValue());
-      tMotor.update();
+      tMotor.update(controllerTimeInSeconds.getDoubleValue());
 
       motorWrite();
    }
