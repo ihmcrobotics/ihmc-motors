@@ -8,11 +8,12 @@ public class TorqueToForceTransmission
     private final YoRegistry registry = new YoRegistry(getClass().getSimpleName());
 
     private static double MOTOR_PULLEY_RADIUS;      // in meters
-    private final YoDouble desiredForce = new YoDouble("desiredForce", registry);
+    private final YoDouble desiredForce;
 
-    public TorqueToForceTransmission(double motorPulleyRadius, YoRegistry parentRegistry)
+    public TorqueToForceTransmission(double motorPulleyRadius, String prefix, YoRegistry parentRegistry)
     {
         MOTOR_PULLEY_RADIUS = motorPulleyRadius;
+        desiredForce = new YoDouble(prefix + "desiredForce", registry);
         parentRegistry.addChild(registry);
     }
 

@@ -36,6 +36,16 @@ public class TMotor extends CANMotor
 
    public TMotor(RobotSide robotSide, int ID, TMotorVersion version, double dt, YoDouble time, YoRegistry parentRegistry)
    {
+      this(robotSide, ID, version, 1, dt, time, parentRegistry);
+   }
+
+   public TMotor(RobotSide robotSide, int ID, int zAxisDirection, double dt, YoDouble time, YoRegistry parentRegistry)
+   {
+      this(robotSide, ID, TMotorVersion.AK109, zAxisDirection, dt, time, parentRegistry);
+   }
+
+   public TMotor(RobotSide robotSide, int ID, TMotorVersion version, int zAxisDirection, double dt, YoDouble time, YoRegistry parentRegistry)
+   {
       super(ID, dt, time, parentRegistry);
       String prefix = ID + "_";
 
@@ -43,7 +53,7 @@ public class TMotor extends CANMotor
       motorReceiveMsg =  new TMotorCANReceiveMessage(ID, encoderParameters);
       motorReplyMsg = new TMotorCANReplyMessage(encoderParameters);
 
-      controller = new TMotorLowLevelController(prefix, parentRegistry);
+      controller = new TMotorLowLevelController(prefix, registry);
 
       velocityFilterCoefficient.setVariableBounds(0.0, 1.0);
       velocityFilterCoefficient.set(0.9);

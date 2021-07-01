@@ -35,7 +35,7 @@ public class TMotorLowLevelController implements RobotController
         motorVelocityKd = new YoInteger(name + "motorVelocityKd", registry);
         motorTorqueKp = new YoDouble(name + "motorTorqueKp", registry);
 
-        torqueToForce = new TorqueToForceTransmission(0.05, registry);
+        torqueToForce = new TorqueToForceTransmission(0.05, name, registry);
 
         parentRegistry.addChild(registry);
     }

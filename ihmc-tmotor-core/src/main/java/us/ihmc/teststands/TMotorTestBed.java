@@ -45,7 +45,7 @@ public class TMotorTestBed extends RealtimeThread
    private final TIntObjectHashMap<TMotor> motors = new TIntObjectHashMap<>();
    private int[] motorIDs;
    private static final int RIGHT_HIP_CAN_ID = 2;
-//   private static final int ELBOW_CAN_ID = 3;
+   private static final int KNEE_CAN_ID = 9;
 
    // CAN-related goodies
    private PCANBasic can = new PCANBasic();
@@ -71,10 +71,9 @@ public class TMotorTestBed extends RealtimeThread
       yoVariableServer.setMainRegistry(registry, null);
 
       TMotor shoulderMotor = new TMotor(RobotSide.RIGHT, RIGHT_HIP_CAN_ID, TMotorVersion.AK109, DT, yoTime, registry);
-//      TMotor elbowMotor = new TMotor(ELBOW_CAN_ID, TMotorVersion.AK109, DT, yoTime, registry);
-//      shoulderMotor.startTrajectoryGenerator();
+      TMotor elbowMotor = new TMotor(RobotSide.RIGHT, KNEE_CAN_ID, TMotorVersion.AK109, DT, yoTime, registry);
       motors.put(shoulderMotor.getID(), shoulderMotor);
-//      motors.put(elbowMotor.getID(), elbowMotor);
+      motors.put(elbowMotor.getID(), elbowMotor);
       motorIDs = motors.keys();
 
       receivedMsg.setLength((byte) 6);
@@ -94,8 +93,6 @@ public class TMotorTestBed extends RealtimeThread
       }
       status = can.Initialize(channel, TPCANBaudrate.PCAN_BAUD_1M, TPCANType.PCAN_TYPE_NONE, 0, (short) 0);
       //     can.SetRcvEvent(channel);
-
-//      motors.get(motorIDs[0]).startTrajectoryGenerator();
    }
 
    @Override
