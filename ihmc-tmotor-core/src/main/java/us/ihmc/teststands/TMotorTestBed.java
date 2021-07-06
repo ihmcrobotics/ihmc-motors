@@ -7,11 +7,9 @@ import us.ihmc.realtime.*;
 import us.ihmc.robotDataLogger.YoVariableServer;
 import us.ihmc.robotDataLogger.logger.DataServerSettings;
 import us.ihmc.robotics.robotSide.RobotSide;
-import us.ihmc.sensors.LoadStarILoad.serial.SerialLoadcell;
 import us.ihmc.tMotorCore.CANMessages.TMotorCANReplyMessage;
 import us.ihmc.tMotorCore.TMotor;
 import us.ihmc.tMotorCore.TMotorVersion;
-import us.ihmc.trajectories.EvaWalkingJointTrajectories;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
@@ -56,6 +54,7 @@ public class TMotorTestBed extends RealtimeThread
    // specialized YoVariables
    private final YoBoolean enableCANMsgs = new YoBoolean("enableCANMsgs", registry);
    private final YoBoolean resetCounters = new YoBoolean("resetCounters", registry);
+   private final YoDouble updateWalkingDuration = new YoDouble("updateWalkingDuration", registry);
 
    // debug
    private final YoInteger messagesInReadBus = new YoInteger("messagesInBus", registry);
@@ -78,6 +77,11 @@ public class TMotorTestBed extends RealtimeThread
 
       receivedMsg.setLength((byte) 6);
       enableCANMsgs.set(true);
+
+      // TODO move below to new trajectory generator
+      updateWalkingDuration.set(shoulderMotor.getWalkingTrajectories().getDuration());
+      updateWalkingDuration.addListener(e->
+                motors.get(shoulderMotor.getID()).updateDuration(updateWalkingDuration.getValueAsDouble()));
    }
 
    private void initialize()
@@ -180,6 +184,8 @@ public class TMotorTestBed extends RealtimeThread
          }
       }
    }
+
+
 
    public static void main(String[] args)
    {

@@ -2,12 +2,12 @@ package us.ihmc.tMotorCore;
 
 import peak.can.basic.TPCANMsg;
 import us.ihmc.CAN.CANMotor;
+import us.ihmc.eva.controlModules.EvaWalkingJointTrajectories;
 import us.ihmc.robotics.partNames.LegJointName;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.tMotorCore.CANMessages.TMotorCANReceiveMessage;
 import us.ihmc.tMotorCore.CANMessages.TMotorCANReplyMessage;
 import us.ihmc.tMotorCore.parameters.TMotorParameters;
-import us.ihmc.trajectories.EvaWalkingJointTrajectories;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
@@ -29,6 +29,7 @@ public class TMotor extends CANMotor
 
    private final YoBoolean startTrajectory = new YoBoolean("startTrajectory", registry);
    private final YoBoolean firstTimeInWalking = new YoBoolean("firstTimeInWalking", registry);
+   private boolean durationHasChanged = false;
 
    // trajectories
    private final EvaWalkingJointTrajectories walkingTrajectories;
@@ -63,7 +64,7 @@ public class TMotor extends CANMotor
       sendDisableMotorCommand = new YoBoolean(prefix + "sendDisableMotorCommand", registry);
       sendZeroMotorCommand = new YoBoolean(prefix + "sendZeroMotorCommand", registry);
 
-      walkingTrajectories = new EvaWalkingJointTrajectories(LegJointName.HIP_PITCH, robotSide, true);
+      walkingTrajectories = new EvaWalkingJointTrajectories(LegJointName.HIP_PITCH, robotSide);
       firstTimeInWalking.set(true);
       parentRegistry.addChild(registry);
    }
@@ -95,6 +96,13 @@ public class TMotor extends CANMotor
             walkingTrajectories.setStartTime(time);
             firstTimeInWalking.set(false);
          }
+
+         if(durationHasChanged)
+         {
+            walkingTrajectories.updateDuration(walkingTrajectories.getDuration(), time);
+            durationHasChanged = false;
+         }
+
 //         controller.setDesireds(0.75*walkingTrajectories.getPosition(time), 0.75*walkingTrajectories.getVelocity(time));
          controller.setDesireds(loadtestWeight.getDoubleValue() * walkingTrajectories.getTorque(time) + functionGenerator.getOffset());
       }
@@ -104,6 +112,12 @@ public class TMotor extends CANMotor
          firstTimeInWalking.set(true);
       }
       update();
+   }
+
+   public void updateDuration(double duration)
+   {
+      durationHasChanged = true;
+      walkingTrajectories.setDuration(duration);
    }
 
    @Override
@@ -177,6 +191,11 @@ public class TMotor extends CANMotor
    public void startTrajectoryGenerator()
    {
       walkingTrajectories.compute();
+   }
+
+   public EvaWalkingJointTrajectories getWalkingTrajectories()
+   {
+      return walkingTrajectories;
    }
 
    public int getID()
