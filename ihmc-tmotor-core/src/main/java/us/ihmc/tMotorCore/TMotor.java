@@ -34,6 +34,7 @@ public class TMotor extends CANMotor
    // trajectories
    private final EvaWalkingJointTrajectories walkingTrajectories;
    private final YoDouble loadtestWeight = new YoDouble("loadtestWeight", registry);
+   private final YoDouble percentGait = new YoDouble("percentGait", registry);
 
    public TMotor(RobotSide robotSide, int ID, TMotorVersion version, double dt, YoDouble time, YoRegistry parentRegistry)
    {
@@ -103,8 +104,9 @@ public class TMotor extends CANMotor
             durationHasChanged = false;
          }
 
-//         controller.setDesireds(0.75*walkingTrajectories.getPosition(time), 0.75*walkingTrajectories.getVelocity(time));
-         controller.setDesireds(loadtestWeight.getDoubleValue() * walkingTrajectories.getTorque(time) + functionGenerator.getOffset());
+         percentGait.set(walkingTrajectories.getPercentThroughGait(time));
+         controller.setDesireds(0.75*walkingTrajectories.getPosition(time), 0.75*walkingTrajectories.getVelocity(time));
+//         controller.setDesireds(loadtestWeight.getDoubleValue() * walkingTrajectories.getTorque(time) + functionGenerator.getOffset());
       }
       else
       {
