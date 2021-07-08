@@ -109,10 +109,14 @@ public class TMotor extends CANMotor
             durationHasChanged = false;
          }
 
+         int mult = 1;
+         if(walkingTrajectories.getJoint() == LegJointName.KNEE_PITCH)
+            mult = -1;
+
          percentGait.set(walkingTrajectories.getPercentThroughGait(time));
-         controller.setDesireds(0.75*walkingTrajectories.getPosition(time), 0.75*walkingTrajectories.getVelocity(time));
+         controller.setDesireds(mult * 0.75*walkingTrajectories.getPosition(time), mult * 0.75*walkingTrajectories.getVelocity(time));
 //         controller.setDesireds(loadtestWeight.getDoubleValue() * walkingTrajectories.getTorque(time) + functionGenerator.getOffset());
-         functionGenerator.setOffsetFiltered(0.75*walkingTrajectories.getPosition(time));
+         functionGenerator.setOffsetFiltered(mult * 0.75*walkingTrajectories.getPosition(time));
          positionToHold.set(functionGenerator.getOffset());
       }
       else
