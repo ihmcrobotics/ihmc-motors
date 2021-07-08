@@ -3,6 +3,7 @@ package us.ihmc.tMotorCore;
 import peak.can.basic.TPCANMsg;
 import us.ihmc.CAN.CANMotor;
 import us.ihmc.eva.controlModules.EvaWalkingJointTrajectories;
+import us.ihmc.robotics.math.functionGenerator.YoFunctionGeneratorMode;
 import us.ihmc.robotics.partNames.LegJointName;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.tMotorCore.CANMessages.TMotorCANReceiveMessage;
@@ -11,8 +12,6 @@ import us.ihmc.tMotorCore.parameters.TMotorParameters;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
-import us.ihmc.yoVariables.variable.YoEnum;
-import us.ihmc.yoVariables.variable.YoInteger;
 
 public class TMotor extends CANMotor
 {
@@ -29,10 +28,11 @@ public class TMotor extends CANMotor
 
    private final YoBoolean startTrajectory = new YoBoolean("startTrajectory", registry);
    private final YoBoolean firstTimeInWalking = new YoBoolean("firstTimeInWalking", registry);
+   private final YoDouble positionToHold = new YoDouble("positionToHold", registry);
    private boolean durationHasChanged = false;
 
    // trajectories
-   private final EvaWalkingJointTrajectories walkingTrajectories;
+   private EvaWalkingJointTrajectories walkingTrajectories;
    private final YoDouble loadtestWeight = new YoDouble("loadtestWeight", registry);
    private final YoDouble percentGait = new YoDouble("percentGait", registry);
 
@@ -67,7 +67,12 @@ public class TMotor extends CANMotor
 
       walkingTrajectories = new EvaWalkingJointTrajectories(LegJointName.HIP_PITCH, robotSide);
       firstTimeInWalking.set(true);
+
       parentRegistry.addChild(registry);
+   }
+
+   public void setJoint(LegJointName joint, RobotSide side) {
+      walkingTrajectories = new EvaWalkingJointTrajectories(joint, side);
    }
 
    public TPCANMsg requestRead()
@@ -107,6 +112,8 @@ public class TMotor extends CANMotor
          percentGait.set(walkingTrajectories.getPercentThroughGait(time));
          controller.setDesireds(0.75*walkingTrajectories.getPosition(time), 0.75*walkingTrajectories.getVelocity(time));
 //         controller.setDesireds(loadtestWeight.getDoubleValue() * walkingTrajectories.getTorque(time) + functionGenerator.getOffset());
+         functionGenerator.setOffsetFiltered(0.75*walkingTrajectories.getPosition(time));
+         positionToHold.set(functionGenerator.getOffset());
       }
       else
       {

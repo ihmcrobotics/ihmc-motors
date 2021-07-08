@@ -6,6 +6,7 @@ import us.ihmc.commons.Conversions;
 import us.ihmc.realtime.*;
 import us.ihmc.robotDataLogger.YoVariableServer;
 import us.ihmc.robotDataLogger.logger.DataServerSettings;
+import us.ihmc.robotics.partNames.LegJointName;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.tMotorCore.CANMessages.TMotorCANReplyMessage;
 import us.ihmc.tMotorCore.TMotor;
@@ -42,8 +43,8 @@ public class TMotorTestBed extends RealtimeThread
    // motors in CAN bus
    private final TIntObjectHashMap<TMotor> motors = new TIntObjectHashMap<>();
    private int[] motorIDs;
-   private static final int RIGHT_HIP_CAN_ID = 2;
-   private static final int KNEE_CAN_ID = 9;
+   private static final int RIGHT_HIP_CAN_ID = 2;//19;
+   private static final int KNEE_CAN_ID = 1;
 
    // CAN-related goodies
    private PCANBasic can = new PCANBasic();
@@ -69,19 +70,23 @@ public class TMotorTestBed extends RealtimeThread
       this.yoVariableServer = yoVariableServer;
       yoVariableServer.setMainRegistry(registry, null);
 
-      TMotor shoulderMotor = new TMotor(RobotSide.RIGHT, RIGHT_HIP_CAN_ID, TMotorVersion.AK109, DT, yoTime, registry);
-      TMotor elbowMotor = new TMotor(RobotSide.RIGHT, KNEE_CAN_ID, TMotorVersion.AK109, DT, yoTime, registry);
-      motors.put(shoulderMotor.getID(), shoulderMotor);
-      motors.put(elbowMotor.getID(), elbowMotor);
+      TMotor hipMotor = new TMotor(RobotSide.RIGHT, RIGHT_HIP_CAN_ID, TMotorVersion.AK109, DT, yoTime, registry);
+      TMotor kneeMotor = new TMotor(RobotSide.RIGHT, KNEE_CAN_ID, TMotorVersion.AK109, DT, yoTime, registry);
+      hipMotor.setJoint(LegJointName.HIP_PITCH, RobotSide.RIGHT);
+      kneeMotor.setJoint(LegJointName.KNEE_PITCH, RobotSide.RIGHT);
+      motors.put(hipMotor.getID(), hipMotor);
+      motors.put(kneeMotor.getID(), kneeMotor);
       motorIDs = motors.keys();
 
       receivedMsg.setLength((byte) 6);
       enableCANMsgs.set(true);
 
       // TODO move below to new trajectory generator
-      updateWalkingDuration.set(shoulderMotor.getWalkingTrajectories().getDuration());
-      updateWalkingDuration.addListener(e->
-                motors.get(shoulderMotor.getID()).updateDuration(updateWalkingDuration.getValueAsDouble()));
+      updateWalkingDuration.set(hipMotor.getWalkingTrajectories().getDuration());
+      updateWalkingDuration.addListener(e-> {
+         for(int id : motorIDs)
+            motors.get(id).updateDuration(updateWalkingDuration.getValueAsDouble());
+      });
    }
 
    private void initialize()
