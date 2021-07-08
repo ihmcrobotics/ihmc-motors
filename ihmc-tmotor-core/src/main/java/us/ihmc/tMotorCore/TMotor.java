@@ -2,17 +2,12 @@ package us.ihmc.tMotorCore;
 
 import peak.can.basic.TPCANMsg;
 import us.ihmc.CAN.CANMotor;
-import us.ihmc.eva.controlModules.EvaWalkingJointTrajectories;
-import us.ihmc.robotics.partNames.LegJointName;
-import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.tMotorCore.CANMessages.TMotorCANReceiveMessage;
 import us.ihmc.tMotorCore.CANMessages.TMotorCANReplyMessage;
 import us.ihmc.tMotorCore.parameters.TMotorParameters;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
-import us.ihmc.yoVariables.variable.YoEnum;
-import us.ihmc.yoVariables.variable.YoInteger;
 
 public class TMotor extends CANMotor
 {
@@ -27,26 +22,21 @@ public class TMotor extends CANMotor
    private final YoBoolean sendDisableMotorCommand;
    private final YoBoolean sendZeroMotorCommand;
 
-   private final YoBoolean startTrajectory = new YoBoolean("startTrajectory", registry);
-   private final YoBoolean firstTimeInWalking = new YoBoolean("firstTimeInWalking", registry);
-   private boolean durationHasChanged = false;
-
-   // trajectories
-   private final EvaWalkingJointTrajectories walkingTrajectories;
-   private final YoDouble loadtestWeight = new YoDouble("loadtestWeight", registry);
-   private final YoDouble percentGait = new YoDouble("percentGait", registry);
-
-   public TMotor(RobotSide robotSide, int ID, TMotorVersion version, double dt, YoDouble time, YoRegistry parentRegistry)
-   {
-      this(robotSide, ID, version, 1, dt, time, parentRegistry);
+   public TMotor(int ID, TMotorVersion version, double dt, YoRegistry parentRegistry) {
+      this(ID, version, dt, null, parentRegistry);
    }
 
-   public TMotor(RobotSide robotSide, int ID, int zAxisDirection, double dt, YoDouble time, YoRegistry parentRegistry)
+   public TMotor(int ID, TMotorVersion version, double dt, YoDouble time, YoRegistry parentRegistry)
    {
-      this(robotSide, ID, TMotorVersion.AK109, zAxisDirection, dt, time, parentRegistry);
+      this(ID, version, 1, dt, time, parentRegistry);
    }
 
-   public TMotor(RobotSide robotSide, int ID, TMotorVersion version, int zAxisDirection, double dt, YoDouble time, YoRegistry parentRegistry)
+   public TMotor(int ID, int zAxisDirection, double dt, YoDouble time, YoRegistry parentRegistry)
+   {
+      this(ID, TMotorVersion.AK109, zAxisDirection, dt, time, parentRegistry);
+   }
+
+   public TMotor(int ID, TMotorVersion version, int zAxisDirection, double dt, YoDouble time, YoRegistry parentRegistry)
    {
       super(ID, dt, time, parentRegistry);
       String prefix = ID + "_";
@@ -65,8 +55,6 @@ public class TMotor extends CANMotor
       sendDisableMotorCommand = new YoBoolean(prefix + "sendDisableMotorCommand", registry);
       sendZeroMotorCommand = new YoBoolean(prefix + "sendZeroMotorCommand", registry);
 
-      walkingTrajectories = new EvaWalkingJointTrajectories(LegJointName.HIP_PITCH, robotSide);
-      firstTimeInWalking.set(true);
       parentRegistry.addChild(registry);
    }
 
@@ -91,40 +79,19 @@ public class TMotor extends CANMotor
 
    public void update(double time)
    {
-      if(startTrajectory.getBooleanValue())
-      {
-         if(firstTimeInWalking.getBooleanValue()){
-            walkingTrajectories.setStartTime(time);
-            firstTimeInWalking.set(false);
-         }
 
-         if(durationHasChanged)
-         {
-            walkingTrajectories.updateDuration(walkingTrajectories.getDuration(), time);
-            durationHasChanged = false;
-         }
-
-         percentGait.set(walkingTrajectories.getPercentThroughGait(time));
-         controller.setDesireds(0.75*walkingTrajectories.getPosition(time), 0.75*walkingTrajectories.getVelocity(time));
-//         controller.setDesireds(loadtestWeight.getDoubleValue() * walkingTrajectories.getTorque(time) + functionGenerator.getOffset());
-      }
-      else
-      {
-         controller.setDesireds(functionGenerator.getValue(), functionGenerator.getValueDot());
-         firstTimeInWalking.set(true);
-      }
-      update();
    }
 
-   public void updateDuration(double duration)
-   {
-      durationHasChanged = true;
-      walkingTrajectories.setDuration(duration);
-   }
+//   public void updateDuration(double duration)
+//   {
+//      durationHasChanged = true;
+//      walkingTrajectories.setDuration(duration);
+//   }
 
    @Override
    public void update()
    {
+      controller.setDesireds(functionGenerator.getValue(), functionGenerator.getValueDot());
       controller.doControl();
       updateYoDesireds();
    }
@@ -190,16 +157,6 @@ public class TMotor extends CANMotor
       return false;
    }
 
-   public void startTrajectoryGenerator()
-   {
-      walkingTrajectories.compute();
-   }
-
-   public EvaWalkingJointTrajectories getWalkingTrajectories()
-   {
-      return walkingTrajectories;
-   }
-
    public int getID()
    {
       return ID;
@@ -223,5 +180,10 @@ public class TMotor extends CANMotor
    public double getTorque()
    {
       return measuredTorqueCurrent.getDoubleValue();
+   }
+
+   public TPCANMsg getCommandedMsg() {
+      //TODO Implement me!
+      return null;
    }
 }

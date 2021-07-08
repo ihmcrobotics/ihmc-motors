@@ -18,6 +18,8 @@ public class TMotorLowLevelController implements RobotController
     private double desiredActuatorVelocity;
     private double desiredActuatorTorque;
 
+    private double unsafeOutputSpeed;
+
     private double measuredForce;
     private final TorqueToForceTransmission torqueToForce;
 
@@ -26,7 +28,13 @@ public class TMotorLowLevelController implements RobotController
     private final YoInteger motorVelocityKd;
     private final YoDouble motorTorqueKp;
 
-    public TMotorLowLevelController(String name, YoRegistry parentRegistry)
+    private final TMotor tMotor;
+
+    public TMotorLowLevelController(String name, YoRegistry parentRegistry) {
+        this(name, null, parentRegistry);
+    }
+
+    public TMotorLowLevelController(String name, TMotor tMotor, YoRegistry parentRegistry)
     {
         controlMode = new YoEnum<>(name + "controlMode", registry, MotorControlMode.class);
         controlMode.set(MotorControlMode.POSITION);
@@ -36,6 +44,8 @@ public class TMotorLowLevelController implements RobotController
         motorTorqueKp = new YoDouble(name + "motorTorqueKp", registry);
 
         torqueToForce = new TorqueToForceTransmission(0.05, name, registry);
+
+        this.tMotor = tMotor;
 
         parentRegistry.addChild(registry);
     }
@@ -91,6 +101,10 @@ public class TMotorLowLevelController implements RobotController
         }
     }
 
+    public void readMotor() {
+        tMotor.read(tMotor.requestRead());
+    }
+
     public void setMeasuredForce(double measuredForce)
     {
         this.measuredForce = measuredForce;
@@ -111,6 +125,12 @@ public class TMotorLowLevelController implements RobotController
         return desiredActuatorTorque;
     }
 
+    public double getMeasuredPosition() {return tMotor.getPosition();}
+
+    public double getMeasuredVelocity() {return tMotor.getVelocity();}
+
+    public double getMeasuredTorque() {return tMotor.getTorque();}
+
     public int getKp()
     {
         return motorPositionKp.getIntegerValue();
@@ -119,5 +139,11 @@ public class TMotorLowLevelController implements RobotController
     public int getKd()
     {
         return motorVelocityKd.getIntegerValue();
+    }
+
+    public double getTorqueKp() {return motorTorqueKp.getDoubleValue();}
+
+    public void setUnsafeOutputSpeed(double unsafeOutputSpeed) {
+        this.unsafeOutputSpeed = unsafeOutputSpeed;
     }
 }
