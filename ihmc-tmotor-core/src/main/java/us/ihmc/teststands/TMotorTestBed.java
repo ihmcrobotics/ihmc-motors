@@ -6,6 +6,7 @@ import us.ihmc.commons.Conversions;
 import us.ihmc.realtime.*;
 import us.ihmc.robotDataLogger.YoVariableServer;
 import us.ihmc.robotDataLogger.logger.DataServerSettings;
+import us.ihmc.robotics.partNames.LegJointName;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.tMotorCore.CANMessages.TMotorCANReplyMessage;
 import us.ihmc.tMotorCore.TMotor;
@@ -42,8 +43,8 @@ public class TMotorTestBed extends RealtimeThread
    // motors in CAN bus
    private final TIntObjectHashMap<TMotor> motors = new TIntObjectHashMap<>();
    private int[] motorIDs;
-   private static final int RIGHT_HIP_CAN_ID = 2;
-   private static final int KNEE_CAN_ID = 9;
+   private static final int RIGHT_HIP_CAN_ID = 2;//19;
+   private static final int KNEE_CAN_ID = 1;
 
    // CAN-related goodies
    private PCANBasic can = new PCANBasic();
@@ -76,8 +77,6 @@ public class TMotorTestBed extends RealtimeThread
 
       receivedMsg.setLength((byte) 6);
       enableCANMsgs.set(true);
-
-      // TODO move below to new trajectory generator
 
    }
 

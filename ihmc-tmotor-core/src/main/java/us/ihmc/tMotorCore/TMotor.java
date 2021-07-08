@@ -58,6 +58,10 @@ public class TMotor extends CANMotor
       parentRegistry.addChild(registry);
    }
 
+//   public void setJoint(LegJointName joint, RobotSide side) {
+//      walkingTrajectories = new EvaWalkingJointTrajectories(joint, side);
+//   }
+
    public TPCANMsg requestRead()
    {
       return motorReceiveMsg.getEnableMotorMsg();
