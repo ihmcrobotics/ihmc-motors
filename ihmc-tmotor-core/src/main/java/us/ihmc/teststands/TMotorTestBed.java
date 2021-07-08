@@ -58,7 +58,6 @@ public class TMotorTestBed extends RealtimeThread
 
    // debug
    private final YoInteger messagesInReadBus = new YoInteger("messagesInBus", registry);
-   
 
    public TMotorTestBed(YoVariableServer yoVariableServer)
    {
@@ -69,8 +68,8 @@ public class TMotorTestBed extends RealtimeThread
       this.yoVariableServer = yoVariableServer;
       yoVariableServer.setMainRegistry(registry, null);
 
-      TMotor shoulderMotor = new TMotor(RobotSide.RIGHT, RIGHT_HIP_CAN_ID, TMotorVersion.AK109, DT, yoTime, registry);
-      TMotor elbowMotor = new TMotor(RobotSide.RIGHT, KNEE_CAN_ID, TMotorVersion.AK109, DT, yoTime, registry);
+      TMotor shoulderMotor = new TMotor(RIGHT_HIP_CAN_ID, TMotorVersion.AK109, DT, yoTime, registry);
+      TMotor elbowMotor = new TMotor(KNEE_CAN_ID, TMotorVersion.AK109, DT, yoTime, registry);
       motors.put(shoulderMotor.getID(), shoulderMotor);
       motors.put(elbowMotor.getID(), elbowMotor);
       motorIDs = motors.keys();
@@ -79,9 +78,7 @@ public class TMotorTestBed extends RealtimeThread
       enableCANMsgs.set(true);
 
       // TODO move below to new trajectory generator
-      updateWalkingDuration.set(shoulderMotor.getWalkingTrajectories().getDuration());
-      updateWalkingDuration.addListener(e->
-                motors.get(shoulderMotor.getID()).updateDuration(updateWalkingDuration.getValueAsDouble()));
+
    }
 
    private void initialize()

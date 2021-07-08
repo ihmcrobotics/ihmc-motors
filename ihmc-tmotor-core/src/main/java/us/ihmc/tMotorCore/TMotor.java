@@ -82,12 +82,6 @@ public class TMotor extends CANMotor
 
    }
 
-//   public void updateDuration(double duration)
-//   {
-//      durationHasChanged = true;
-//      walkingTrajectories.setDuration(duration);
-//   }
-
    @Override
    public void update()
    {
