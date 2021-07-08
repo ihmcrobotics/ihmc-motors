@@ -101,9 +101,9 @@ public class TMotorLowLevelController implements RobotController
         }
     }
 
-    public void readMotor() {
-        tMotor.read(tMotor.requestRead());
-    }
+//    public void readMotor() {
+//        tMotor.read(tMotor.requestRead());
+//    }
 
     public void setMeasuredForce(double measuredForce)
     {
