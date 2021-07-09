@@ -16,7 +16,8 @@ import us.ihmc.yoVariables.variable.YoDouble;
 public class TMotor extends CANMotor
 {
    private final TMotorLowLevelController controller;
-   private static final double UNSAFE_SPEED = 12.0;
+   private static final double UNSAFE_SPEED = 8.0;
+   private static final double UNSAFE_TORQUE = 10.0;
 
    // Command messages for T-Motor
    private final TMotorCANReceiveMessage motorReceiveMsg;      // CAN message sent to motor
@@ -195,7 +196,7 @@ public class TMotor extends CANMotor
 
    private boolean motorIsInUnsafeState()
    {
-      if( Math.abs(measuredVelocity.getDoubleValue()) > UNSAFE_SPEED)
+      if( Math.abs(measuredVelocity.getDoubleValue()) > UNSAFE_SPEED || Math.abs(measuredTorqueCurrent.getDoubleValue()) > UNSAFE_TORQUE)
          return true;
 
       return false;

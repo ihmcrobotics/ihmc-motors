@@ -43,8 +43,8 @@ public class TMotorTestBed extends RealtimeThread
    // motors in CAN bus
    private final TIntObjectHashMap<TMotor> motors = new TIntObjectHashMap<>();
    private int[] motorIDs;
-   private static final int RIGHT_HIP_CAN_ID = 19;
-   private static final int KNEE_CAN_ID = 1;
+   private static final int RIGHT_HIP_CAN_ID = 3;//19
+   private static final int KNEE_CAN_ID = 1;//9
 
    // CAN-related goodies
    private PCANBasic can = new PCANBasic();
