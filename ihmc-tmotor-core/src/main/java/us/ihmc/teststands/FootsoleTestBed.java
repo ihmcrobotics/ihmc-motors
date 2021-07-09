@@ -66,7 +66,7 @@ public class FootsoleTestBed extends EtherCATRealtimeThread
 
         lan9252Slave = new EtherCATPressureSensor(0, 0);
         yoPressureArraySensor = new YoEtherCATPressureSensor(lan9252Slave, registry);
-        yoPressureArraySensor.setCoeffs(0.0, 0.1, 1000.0);
+        yoPressureArraySensor.setCoeffs(0.0, 1.0, 0.0);
 
         yoVariableServer.setMainRegistry(registry, yoGraphicsListRegistry);
 //        yoGraphicsListRegistry.setYoGraphicsUpdatedRemotely(true);

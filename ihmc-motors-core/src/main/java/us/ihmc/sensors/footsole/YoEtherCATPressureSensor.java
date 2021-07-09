@@ -12,6 +12,7 @@ public class YoEtherCATPressureSensor
 
     private static final int NUMBER_OF_SENSORS = 8;
     private final EtherCATPressureSensor pressureSensor;
+    private final YoInteger readLoopDuration = new YoInteger("readLoopDuration", registry);
     private final HashMap<Integer, YoInteger> pressureMap = new HashMap<>();
     private double[] measuredNormalForces = new double[NUMBER_OF_SENSORS];
 
@@ -46,6 +47,7 @@ public class YoEtherCATPressureSensor
         {
             pressureMap.get(i).set(pressureSensor.getPressureMbar(i));
         }
+        readLoopDuration.set(pressureSensor.getDuration().get());
     }
 
     public double[] getMeasuredNormalForces()

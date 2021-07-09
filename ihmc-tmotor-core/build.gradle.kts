@@ -27,9 +27,6 @@ testDependencies {
 
 tasks.getByPath("installDist").dependsOn("compositeJar")
 
-app.entrypoint("TMotorKtTestBed", "us.ihmc.teststands.TMotorKtTestBed")
-app.entrypoint("TMotorTestBed", "us.ihmc.teststands.TMotorTestBed")
-app.entrypoint("LoadStarTestBed", "us.ihmc.sensors.LoadStarILoad.testbed.LoadStarTestBed")
 app.entrypoint("FootsoleTestBed", "us.ihmc.teststands.FootsoleTestBed")
 
 tasks.create("deploy") {
@@ -39,9 +36,6 @@ tasks.create("deploy") {
       remote.session("172.16.66.55", { sshClient -> sshClient.authPassword("root", "ShadyLady") }) //Note: Use 172.16.66.55 or 50 for ISA test beds. Use 100 for Electric actuator test beds. Later we should make this be a variable of sorts...
       {
          put(file("build/install/${project.name}").toString(), "isa-testbed")
-         exec("chmod +x isa-testbed/bin/TMotorKtTestBed")
-         exec("chmod +x isa-testbed/bin/TMotorTestBed")
-         exec("chmod +x isa-testbed/bin/LoadStarTestBed")
          exec("chmod +x isa-testbed/bin/FootsoleTestBed")
       }
    }
