@@ -27,8 +27,6 @@ public class TMotor extends CANMotor
    private float desiredVelocity;
    private float desiredTorque;
 
-   // trajectories
-//   private final EvaWalkingJointTrajectories walkingTrajectories;
    private final YoDouble loadtestWeight = new YoDouble("loadtestWeight", registry);
    private final YoDouble percentGait = new YoDouble("percentGait", registry);
 
@@ -44,7 +42,6 @@ public class TMotor extends CANMotor
       velocityFilterCoefficient.setVariableBounds(0.0, 1.0);
       velocityFilterCoefficient.set(0.9);
 
-//      walkingTrajectories = new EvaWalkingJointTrajectories(LegJointName.HIP_PITCH, robotSide);
       firstTimeInWalking.set(true);
       parentRegistry.addChild(registry);
    }
