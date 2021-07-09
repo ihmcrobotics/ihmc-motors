@@ -1,5 +1,6 @@
 package us.ihmc.sensors.footsole;
 
+import us.ihmc.etherCAT.javalution.Struct;
 import us.ihmc.etherCAT.master.RxPDO;
 import us.ihmc.etherCAT.master.Slave;
 import us.ihmc.etherCAT.master.SyncManager;
@@ -36,6 +37,8 @@ public class EtherCATPressureSensor extends Slave
         Signed16 pressureMbar5 = new Signed16();
         Signed16 pressureMbar6 = new Signed16();
         Signed16 pressureMbar7 = new Signed16();
+        Signed16 duration = new Signed16();
+        Signed16 cpt = new Signed16();
     }
 
     private final RPDO_1600 rpdo_x1600;
@@ -79,5 +82,16 @@ public class EtherCATPressureSensor extends Slave
                 return 0;
         }
     }
+
+    public Struct.Signed16 getDuration()
+    {
+        return tpdo_x1A00.duration;
+    }
+
+    public Struct.Signed16 getFrequency()
+    {
+        return tpdo_x1A00.cpt;
+    }
+
 
 }
