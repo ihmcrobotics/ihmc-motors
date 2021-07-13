@@ -32,6 +32,8 @@ public class TMotor extends CANMotor
    private final YoDouble positionToHold = new YoDouble("positionToHold", registry);
    private boolean durationHasChanged = false;
 
+   private final int zDirection;
+
    // trajectories
    private EvaWalkingJointTrajectories walkingTrajectories;
    private final YoDouble loadtestWeight = new YoDouble("loadtestWeight", registry);
@@ -51,6 +53,7 @@ public class TMotor extends CANMotor
    {
       super(ID, dt, time, parentRegistry);
       String prefix = ID + "_";
+      this.zDirection = zAxisDirection;
 
       TMotorParameters encoderParameters = version.getMotorParameters();
       motorReceiveMsg =  new TMotorCANReceiveMessage(ID, encoderParameters);
@@ -88,9 +91,9 @@ public class TMotor extends CANMotor
 
       motorReplyMsg.parseAndUnpack(message);
 
-      measuredActuatorPosition.set(motorReplyMsg.getMeasuredPosition());
-      measuredVelocity.set(motorReplyMsg.getMeasuredVelocity());
-      measuredTorqueCurrent.set(motorReplyMsg.getMeasuredTorque());
+      measuredActuatorPosition.set(zDirection * motorReplyMsg.getMeasuredPosition());
+      measuredVelocity.set(zDirection * motorReplyMsg.getMeasuredVelocity());
+      measuredTorqueCurrent.set(zDirection * motorReplyMsg.getMeasuredTorque());
 
       filteredVelocity.update();
    }
@@ -185,9 +188,9 @@ public class TMotor extends CANMotor
 
       int kp = controller.getKp();
       int kd = controller.getKd();
-      float desiredPosition = (float) desiredActuatorPosition.getDoubleValue();
-      float desiredVelocity = (float) desiredActuatorVelocity.getDoubleValue();
-      float desiredTorque = (float) desiredActuatorTorque.getDoubleValue();
+      float desiredPosition = (float) (zDirection * desiredActuatorPosition.getDoubleValue());
+      float desiredVelocity = (float) (zDirection * desiredActuatorVelocity.getDoubleValue());
+      float desiredTorque = (float) (zDirection * desiredActuatorTorque.getDoubleValue());
       motorReceiveMsg.parseAndPackControlMsg(desiredPosition, desiredVelocity, desiredTorque, kp, kd);
       yoCANMsg.setSent(motorReceiveMsg.getControlMotorCommandData());
 

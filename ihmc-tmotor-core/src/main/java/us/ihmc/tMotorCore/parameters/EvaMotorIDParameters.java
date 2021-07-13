@@ -16,8 +16,8 @@ public class EvaMotorIDParameters
 
     private void setMotorIDs()
     {
-        jointMotorID.put(RightHipAndKneeTestStandJointMap.Joints.r_leg_hpy, 2);
-//        jointMotorID.put(RightHipAndKneeTestStandJointMap.Joints.r_leg_kn_pulley_y, 1);
+        jointMotorID.put(RightHipAndKneeTestStandJointMap.Joints.r_leg_hpy, 3);
+        jointMotorID.put(RightHipAndKneeTestStandJointMap.Joints.r_leg_kn_pulley_y, 1);
     }
 
     public int getJointMotorID(RightHipAndKneeTestStandJointMap.Joints joint)
