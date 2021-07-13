@@ -56,6 +56,8 @@ public class TMotorTestBed extends RealtimeThread
    private final YoBoolean enableCANMsgs = new YoBoolean("enableCANMsgs", registry);
    private final YoBoolean resetCounters = new YoBoolean("resetCounters", registry);
    private final YoDouble updateWalkingDuration = new YoDouble("updateWalkingDuration", registry);
+   private final YoBoolean startAllWalkingTrajectories = new YoBoolean("startAllWalkingTrajectories", registry);
+   private final YoBoolean stopAllWalkingTrajectories = new YoBoolean("stopAllWalkingTrajectories", registry);
 
    // debug
    private final YoInteger messagesInReadBus = new YoInteger("messagesInBus", registry);
@@ -87,6 +89,9 @@ public class TMotorTestBed extends RealtimeThread
          for(int id : motorIDs)
             motors.get(id).updateDuration(updateWalkingDuration.getValueAsDouble());
       });
+
+      startAllWalkingTrajectories.set(false);
+      stopAllWalkingTrajectories.set(false);
    }
 
    private void initialize()
@@ -149,6 +154,20 @@ public class TMotorTestBed extends RealtimeThread
    
    private void read()
    {
+      if(startAllWalkingTrajectories.getBooleanValue())
+      {
+         for(int motorId : motorIDs)
+            motors.get(motorId).toggleWalkingTrajectories(true);
+         startAllWalkingTrajectories.set(false);
+      }
+
+      if(stopAllWalkingTrajectories.getBooleanValue())
+      {
+         for(int motorId : motorIDs)
+            motors.get(motorId).toggleWalkingTrajectories(false);
+         stopAllWalkingTrajectories.set(false);
+      }
+
       TPCANStatus readStatus = can.Read(channel, receivedMsg, null);
 
       messagesInReadBus.set(0);
