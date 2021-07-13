@@ -9,7 +9,7 @@ import us.ihmc.yoVariables.variable.YoInteger;
 
 public class TMotorLowLevelController implements RobotController
 {
-    private final YoRegistry registry = new YoRegistry(getClass().getSimpleName());
+    private final YoRegistry registry;
 
     private double unsafeOutputSpeed;
 
@@ -32,14 +32,15 @@ public class TMotorLowLevelController implements RobotController
     public TMotorLowLevelController(String name, TMotor tMotor, YoRegistry parentRegistry)
     {
         this.tMotor = tMotor;
+        this.registry = new YoRegistry(getClass().getSimpleName() + "_" + name);
 
-        sendEnableMotorCommand = new YoBoolean(name + "sendEnableMotorCommand", registry);
-        sendDisableMotorCommand = new YoBoolean(name + "sendDisableMotorCommand", registry);
-        sendZeroMotorCommand = new YoBoolean(name + "sendZeroMotorCommand", registry);
+        sendEnableMotorCommand = new YoBoolean(name + "_sendEnableMotorCommand", registry);
+        sendDisableMotorCommand = new YoBoolean(name + "_sendDisableMotorCommand", registry);
+        sendZeroMotorCommand = new YoBoolean(name + "_sendZeroMotorCommand", registry);
 
-        motorPositionKp = new YoInteger(name + "motorPositionKp", registry);
-        motorVelocityKd = new YoInteger(name + "motorVelocityKd", registry);
-        motorTorqueKp = new YoDouble(name + "motorTorqueKp", registry);
+        motorPositionKp = new YoInteger(name + "_motorPositionKp", registry);
+        motorVelocityKd = new YoInteger(name + "_motorVelocityKd", registry);
+        motorTorqueKp = new YoDouble(name + "_motorTorqueKp", registry);
 
         parentRegistry.addChild(registry);
     }
