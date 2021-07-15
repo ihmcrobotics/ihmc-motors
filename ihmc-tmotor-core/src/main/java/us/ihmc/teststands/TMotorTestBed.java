@@ -69,10 +69,10 @@ public class TMotorTestBed extends RealtimeThread
       this.yoVariableServer = yoVariableServer;
       yoVariableServer.setMainRegistry(registry, null);
 
-      TMotor shoulderMotor = new TMotor(RIGHT_HIP_CAN_ID, TMotorVersion.AK109, DT, yoTime, registry);
-      TMotor elbowMotor = new TMotor(KNEE_CAN_ID, TMotorVersion.AK109, DT, yoTime, registry);
-      motors.put(shoulderMotor.getID(), shoulderMotor);
-      motors.put(elbowMotor.getID(), elbowMotor);
+      TMotor hipMotor = new TMotor(RIGHT_HIP_CAN_ID, TMotorVersion.AK109, DT, registry);
+      TMotor kneeMotor = new TMotor(KNEE_CAN_ID, TMotorVersion.AK109, DT, registry);
+      motors.put(hipMotor.getID(), hipMotor);
+      motors.put(kneeMotor.getID(), kneeMotor);
       motorIDs = motors.keys();
 
       receivedMsg.setLength((byte) 6);
@@ -164,7 +164,7 @@ public class TMotorTestBed extends RealtimeThread
    {
       for(int id = 0; id < motorIDs.length; id++)
       {
-         motors.get(motorIDs[id]).update(time);
+         motors.get(motorIDs[id]).update();
       }
    }
 
