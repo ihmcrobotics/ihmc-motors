@@ -120,15 +120,14 @@ public class EvaFootsole
 
     private void initializePressureSensorCentroids()
     {
-        addCentroid(0, footLength / 5. - footLength / 2.0, footWidth / 4.0);
-        addCentroid(1, footLength / 5. - footLength / 2.0, -footWidth / 4.0);
-        addCentroid(2, 2.*footLength / 5. - footLength / 2.0, footWidth / 4.0);
-        addCentroid(3, 2.*footLength / 5. - footLength / 2.0, -footWidth / 4.0);
-        addCentroid(4, 3.*footLength / 5. - footLength / 2.0, footWidth / 4.0);
-        addCentroid(5, 3.*footLength / 5. - footLength / 2.0, -footWidth / 4.0);
-        addCentroid(6, 4.*footLength / 5. - footLength / 2.0, footWidth / 4.0);
-        addCentroid(7, 4.*footLength / 5. - footLength / 2.0, -footWidth / 4.0);
-
+        addCentroid(0, -0.02652, -0.02389);
+        addCentroid(1, 0.03448 , -0.02511);
+        addCentroid(2, 0.08634 , -0.03239);
+        addCentroid(3, 0.09356 , 0.01633);
+        addCentroid(4, 0.03656 , 0.02409);
+        addCentroid(5, -0.03452, 0.02498);
+        addCentroid(6, -0.09421, 0.01821);
+        addCentroid(7, -0.09118, -0.03123);
         for(int i = 0; i < yoPressureSpaces.size(); i++)
             pressureSensorValueMap.put(i, new YoDouble("pressureCoP"+i, registry));
     }
