@@ -61,7 +61,6 @@ public class TMotorTestBed extends RealtimeThread
    // specialized YoVariables
    private final YoBoolean enableCANMsgs = new YoBoolean("enableCANMsgs", registry);
    private final YoBoolean resetCounters = new YoBoolean("resetCounters", registry);
-   private final YoDouble updateWalkingDuration = new YoDouble("updateWalkingDuration", registry);
 
    // debug
    private final YoInteger messagesInReadBus = new YoInteger("messagesInBus", registry);
