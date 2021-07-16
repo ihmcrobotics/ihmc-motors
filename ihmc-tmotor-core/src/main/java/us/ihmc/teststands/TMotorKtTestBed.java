@@ -94,7 +94,7 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
       analogInput = new EL3104(0, 1);
       yoEL3104 = new YoEL3104(analogInput, registry);
 //      tMotor = new TMotor(RobotSide.RIGHT, CAN_ID, TMotorVersion.AK109, DT, controllerTimeInSeconds, registry);
-      tMotor = new TMotor(CAN_ID, TMotorVersion.AK109, DT, registry);
+      tMotor = new TMotor(CAN_ID, "tMotor", TMotorVersion.AK109, DT, registry);
       receivedMsg.setLength((byte) 6);
       alphaLoadcell.set(0.99);
 
