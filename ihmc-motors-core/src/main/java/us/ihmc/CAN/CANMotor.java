@@ -18,6 +18,7 @@ public abstract class CANMotor
    protected TPCANHandle channel;
    protected final TPCANMsg receivedMsg = new TPCANMsg();
    protected final int ID;
+   protected final String motorName;
 
    // inputs
    protected final YoDouble measuredEncoderPosition;
@@ -35,13 +36,14 @@ public abstract class CANMotor
    protected static final byte STANDARD_CAN_MESSAGE = TPCANMessageType.PCAN_MESSAGE_STANDARD.getValue();
 //   protected final YoFunctionGenerator functionGenerator;
 
-   public CANMotor(int ID, double dt)
+   public CANMotor(int id, String motorName, double dt)
    {
-      this.ID = ID;
-      String prefix = ID +"_";
+      this.ID = id;
+      this.motorName = motorName;
+      String prefix = motorName +"_";
 
       registry = new YoRegistry(prefix + name);
-      yoCANMsg = new YoCANMsg(prefix, ID, registry);
+      yoCANMsg = new YoCANMsg(motorName, registry);
 
       measuredEncoderPosition = new YoDouble(prefix + "measuredEncoderPosition", registry); // encoder tick value
       measuredActuatorPosition = new YoDouble(prefix + "measuredActuatorPosition", registry); // rad

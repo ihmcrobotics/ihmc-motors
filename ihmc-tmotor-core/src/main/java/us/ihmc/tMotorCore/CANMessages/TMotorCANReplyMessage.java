@@ -13,6 +13,8 @@ public class TMotorCANReplyMessage
     private final float MIN_TORQUE;
     private final float MAX_TORQUE;
 
+    private int measuredEncoderPosition;
+
     private float measuredPosition;
     private float measuredVelocity;
     private float measuredTorque;
@@ -37,17 +39,17 @@ public class TMotorCANReplyMessage
 
         // parse message
         int id = message.getData()[0];
-        int positionInt = (Data1 << 8) | Data2;
-        int velocityInt = (Data3 << 4) | (Data4 >> 4);
-        int torqueInt = ((Data4 & 0xF) << 8) | Data5;
+        measuredEncoderPosition = (Data1 << 8) | Data2;
+        int measuredEncoderVelocity = (Data3 << 4) | (Data4 >> 4);
+        int measuredEncoderTorque = ((Data4 & 0xF) << 8) | Data5;
 
         //
         // convert sensor values to meaningful (float) units
         //
         // position of output shaft
-        measuredPosition = CANTools.uint_to_float(positionInt, MIN_POSITION, MAX_POSITION, 16);
-        measuredVelocity = CANTools.uint_to_float(velocityInt, MIN_VELOCITY, MAX_VELOCITY, 12);
-        measuredTorque = CANTools.uint_to_float(torqueInt, MIN_TORQUE, MAX_TORQUE, 12);
+        measuredPosition = CANTools.uint_to_float(measuredEncoderPosition, MIN_POSITION, MAX_POSITION, 16);
+        measuredVelocity = CANTools.uint_to_float(measuredEncoderVelocity, MIN_VELOCITY, MAX_VELOCITY, 12);
+        measuredTorque = CANTools.uint_to_float(measuredEncoderTorque, MIN_TORQUE, MAX_TORQUE, 12);
     }
 
     public float getMeasuredPosition()
@@ -64,6 +66,8 @@ public class TMotorCANReplyMessage
     {
         return measuredTorque;
     }
+
+    public int getMeasuredEncoderPosition() { return measuredEncoderPosition; }
 
     public static int getID(TPCANMsg message)
     {

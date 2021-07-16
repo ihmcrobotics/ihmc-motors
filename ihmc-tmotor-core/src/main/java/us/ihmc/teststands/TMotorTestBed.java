@@ -6,16 +6,20 @@ import us.ihmc.commons.Conversions;
 import us.ihmc.realtime.*;
 import us.ihmc.robotDataLogger.YoVariableServer;
 import us.ihmc.robotDataLogger.logger.DataServerSettings;
+import us.ihmc.robotics.math.functionGenerator.YoFunctionGenerator;
 import us.ihmc.robotics.partNames.LegJointName;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.tMotorCore.CANMessages.TMotorCANReplyMessage;
 import us.ihmc.tMotorCore.TMotor;
+import us.ihmc.tMotorCore.TMotorLowLevelController;
 import us.ihmc.tMotorCore.TMotorVersion;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoInteger;
 import us.ihmc.yoVariables.variable.YoLong;
+
+import java.util.HashMap;
 
 import static peak.can.basic.TPCANStatus.PCAN_ERROR_QRCVEMPTY;
 
@@ -43,8 +47,10 @@ public class TMotorTestBed extends RealtimeThread
    // motors in CAN bus
    private final TIntObjectHashMap<TMotor> motors = new TIntObjectHashMap<>();
    private int[] motorIDs;
-   private static final int RIGHT_HIP_CAN_ID = 19;
-   private static final int KNEE_CAN_ID = 1;
+   private static final int RIGHT_HIP_CAN_ID = 2;
+   private static final int KNEE_CAN_ID = 11;
+   private final HashMap<TMotor, TMotorLowLevelController> motorControllers = new HashMap<>();
+   private final YoFunctionGenerator functionGenerator;
 
    // CAN-related goodies
    private PCANBasic can = new PCANBasic();
@@ -66,21 +72,34 @@ public class TMotorTestBed extends RealtimeThread
 
       CPUDMALatency.setLatency(0);
 
+      initializeCAN();
+
       this.yoVariableServer = yoVariableServer;
       yoVariableServer.setMainRegistry(registry, null);
 
-      TMotor hipMotor = new TMotor(RIGHT_HIP_CAN_ID, TMotorVersion.AK109, DT, registry);
-      TMotor kneeMotor = new TMotor(KNEE_CAN_ID, TMotorVersion.AK109, DT, registry);
+      TMotor hipMotor = new TMotor(RIGHT_HIP_CAN_ID, "hipMotor", TMotorVersion.AK109, DT, registry);
+      hipMotor.setCanBus(can, channel);
       motors.put(hipMotor.getID(), hipMotor);
+      TMotorLowLevelController hipController = new TMotorLowLevelController("hipController", hipMotor, registry);
+      hipController.setUnsafeOutputSpeed(16.0);
+      motorControllers.put(hipMotor, hipController);
+      functionGenerator = new YoFunctionGenerator("functionGenerator", yoTime, registry);
+      functionGenerator.setAlphaForSmoothing(0.99);
+
+      TMotor kneeMotor = new TMotor(KNEE_CAN_ID, "kneeMotor", TMotorVersion.AK109, DT, registry);
+      kneeMotor.setCanBus(can, channel);
       motors.put(kneeMotor.getID(), kneeMotor);
+      TMotorLowLevelController kneeController = new TMotorLowLevelController("kneeController", kneeMotor, registry);
+      kneeController.setUnsafeOutputSpeed(16.0);
+      motorControllers.put(kneeMotor, kneeController);
+
       motorIDs = motors.keys();
 
       receivedMsg.setLength((byte) 6);
       enableCANMsgs.set(true);
-
    }
 
-   private void initialize()
+   private void initializeCAN()
    {
       if (!can.initializeAPI())
       {
@@ -92,7 +111,6 @@ public class TMotorTestBed extends RealtimeThread
          System.out.println("CAN API has been initialized");
       }
       status = can.Initialize(channel, TPCANBaudrate.PCAN_BAUD_1M, TPCANType.PCAN_TYPE_NONE, 0, (short) 0);
-      //     can.SetRcvEvent(channel);
    }
 
    @Override
@@ -121,7 +139,7 @@ public class TMotorTestBed extends RealtimeThread
             canReadTime.set(System.nanoTime() - canReadStartTime);
 
             long computeStartTime = System.nanoTime();
-            compute(yoTime.getDoubleValue());
+            compute();
             computeTime.set(System.nanoTime() - computeStartTime);
 
             long canWriteStartTime = System.nanoTime();
@@ -160,11 +178,15 @@ public class TMotorTestBed extends RealtimeThread
       }
    }
 
-   private void compute(double time)
+   private void compute()
    {
       for(int id = 0; id < motorIDs.length; id++)
       {
-         motors.get(motorIDs[id]).update();
+         motorControllers.get(motors.get(motorIDs[id])).setDesiredPosition(functionGenerator.getValue());
+         motorControllers.get(motors.get(motorIDs[id])).setDesiredVelocity(functionGenerator.getValueDot());
+         motorControllers.get(motors.get(motorIDs[id])).setDesiredTorque(0.0);
+
+         motorControllers.get(motors.get(motorIDs[id])).doControl();
       }
    }
 
@@ -187,8 +209,6 @@ public class TMotorTestBed extends RealtimeThread
    {
       YoVariableServer yoVariableServer = new YoVariableServer(TMotorTestBed.class, null, new DataServerSettings(true), DT);
       TMotorTestBed testbed = new TMotorTestBed(yoVariableServer);
-
-      testbed.initialize();
 
       yoVariableServer.start();
 
