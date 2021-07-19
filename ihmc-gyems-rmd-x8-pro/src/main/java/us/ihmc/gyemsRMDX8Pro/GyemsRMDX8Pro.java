@@ -1,7 +1,6 @@
 package us.ihmc.gyemsRMDX8Pro;
 
-import us.ihmc.gyemsCore.GyemsMotor;
+import us.ihmc.motorsCore.Motor;
 
-public class GyemsRMDX8Pro extends GyemsMotor
-{
+public class GyemsRMDX8Pro implements Motor {
 }

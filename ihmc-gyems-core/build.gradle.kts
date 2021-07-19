@@ -16,9 +16,6 @@ ihmc {
 
 mainDependencies {
    api("us.ihmc:ihmc-motors-core:source")
-   api("us.ihmc:ihmc-ethercat-master:0.12.0")
-   api("us.ihmc:ihmc-realtime:1.3.1")
-   api("org.scream3r:jssc:2.8.0")
 }
 
 testDependencies {
@@ -27,9 +24,7 @@ testDependencies {
 
 tasks.getByPath("installDist").dependsOn("compositeJar")
 
-app.entrypoint("FootsoleTestBed", "us.ihmc.teststands.FootsoleTestBed")
-app.entrypoint("TMotorKtTestBed", "us.ihmc.teststands.TMotorKtTestBed")
-app.entrypoint("TMotorTestBed", "us.ihmc.teststands.TMotorTestBed")
+app.entrypoint("GyemsMotorTestBed", "us.ihmc.gyemsCore.teststands.GyemsMotorTestBed")
 
 tasks.create("deploy") {
    dependsOn("installDist")
@@ -38,9 +33,7 @@ tasks.create("deploy") {
       remote.session("172.16.66.55", { sshClient -> sshClient.authPassword("root", "ShadyLady") }) //Note: Use 172.16.66.55 or 50 for ISA test beds. Use 100 for Electric actuator test beds. Later we should make this be a variable of sorts...
               {
                  put(file("build/install/${project.name}").toString(), "isa-testbed")
-                 exec("chmod +x isa-testbed/bin/TMotorKtTestBed")
-                 exec("chmod +x isa-testbed/bin/TMotorTestBed")
-                 exec("chmod +x isa-testbed/bin/FootsoleTestBed")
+                 exec("chmod +x isa-testbed/bin/GyemsMotorTestBed")
               }
    }
 }
