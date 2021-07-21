@@ -19,7 +19,6 @@ import us.ihmc.robotDataLogger.YoVariableServer;
 import us.ihmc.robotDataLogger.logger.DataServerSettings;
 import us.ihmc.robotics.math.filters.ButterworthFilteredYoVariable;
 import us.ihmc.robotics.math.functionGenerator.YoFunctionGenerator;
-import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.sensors.TorqueToForceTransmission;
 import us.ihmc.tMotorCore.CANMessages.TMotorCANReplyMessage;
 import us.ihmc.tMotorCore.TMotor;
@@ -69,6 +68,7 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
    private final YoEL3104 yoEL3104;
    private final TMotor tMotor;
    private final TMotorLowLevelController motorController;
+   private final TorqueToForceTransmission torqueToForce;
    private final YoFunctionGenerator functionGenerator;
    private final YoEnum<Slave.State> ek1100State = new YoEnum<>("ek1100State", registry, Slave.State.class);
    private final YoEnum<Slave.State> el3104State = new YoEnum<>("el3104State", registry, Slave.State.class);
@@ -100,7 +100,9 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
 //      tMotor = new TMotor(RobotSide.RIGHT, CAN_ID, TMotorVersion.AK109, DT, controllerTimeInSeconds, registry);
       tMotor = new TMotor(CAN_ID, "tMotor", TMotorVersion.AK109, DT, registry);
       motorController = new TMotorLowLevelController("tMotorController", tMotor, registry);
-      motorController.setUnsafeOutputSpeed(16.0);
+      motorController.setUnsafeOutputSpeed(12.0);
+
+      torqueToForce = new TorqueToForceTransmission(0.0508, "tMotor_", registry);
 
       functionGenerator = new YoFunctionGenerator("functionGenerator", controllerTimeInSeconds, registry);
       functionGenerator.setAlphaForSmoothing(0.99);
@@ -181,6 +183,18 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
       }
    }
 
+   private void setDesireds()
+   {
+      motorController.setDesiredTorque(functionGenerator.getValue());
+      torqueToForce.update(functionGenerator.getValue());
+   }
+
+   private void setMeasuredForce(double measuredForce)
+   {
+      double forceError = torqueToForce.getDesiredForce() - measuredForce;
+      motorController.setTorqueError(forceError * torqueToForce.getMotorPulleyRadius());
+   }
+
    /**
     * Callback to notify controller that there was a difference in working counter This gets called
     * when the expected working counter and actual working counter differ. It is recommended to go to a
@@ -224,7 +238,8 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
       filteredTorque.update();
 
       torqueSensorProcessor.update();
-//      tMotor.setMeasuredForce(filteredTorque.getDoubleValue());
+      setDesireds();
+      setMeasuredForce(filteredTorque.getDoubleValue());
       motorController.doControl();
 
       motorWrite();
