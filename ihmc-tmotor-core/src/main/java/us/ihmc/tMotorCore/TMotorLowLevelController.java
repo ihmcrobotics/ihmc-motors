@@ -1,6 +1,7 @@
 package us.ihmc.tMotorCore;
 
 import peak.can.basic.TPCANMsg;
+import us.ihmc.sensors.TorqueToForceTransmission;
 import us.ihmc.simulationconstructionset.util.RobotController;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
@@ -19,6 +20,9 @@ public class TMotorLowLevelController implements RobotController
 
     private final TMotor tMotor;
 
+    private final TorqueToForceTransmission torqueToForce;
+    private double measuredForce = 0.0;
+
     private final YoBoolean sendEnableMotorCommand;
     private final YoBoolean sendDisableMotorCommand;
     private final YoBoolean sendZeroMotorCommand;
@@ -28,6 +32,8 @@ public class TMotorLowLevelController implements RobotController
     private final YoInteger motorPositionKp;
     private final YoInteger motorVelocityKd;
     private final YoDouble motorTorqueKp;
+
+
 
     public TMotorLowLevelController(String name, TMotor tMotor, YoRegistry parentRegistry)
     {
@@ -41,6 +47,8 @@ public class TMotorLowLevelController implements RobotController
         motorPositionKp = new YoInteger(name + "_motorPositionKp", registry);
         motorVelocityKd = new YoInteger(name + "_motorVelocityKd", registry);
         motorTorqueKp = new YoDouble(name + "_motorTorqueKp", registry);
+
+        torqueToForce = new TorqueToForceTransmission(0.05, name, registry);
 
         parentRegistry.addChild(registry);
     }
@@ -60,6 +68,9 @@ public class TMotorLowLevelController implements RobotController
         float desiredPosition = (float) desiredActuatorPosition;
         float desiredVelocity = (float) desiredActuatorVelocity;
         float desiredTorque = (float) desiredActuatorTorque;
+
+        double forceError = torqueToForce.getDesiredForce() - measuredForce;
+        desiredTorque += motorTorqueKp.getDoubleValue() * (forceError * torqueToForce.getMotorPulleyRadius());
 
         tMotor.parseAndPack(getKp(), getKd(), desiredPosition, desiredVelocity, desiredTorque);
         tMotor.getYoCANMsg().setSent(tMotor.getControlMotorMsg().getData());
@@ -134,7 +145,11 @@ public class TMotorLowLevelController implements RobotController
         tMotor.update();
     }
 
-//    public void write()
+    public void updateTorqueToForce(double tau_d) {
+        torqueToForce.update(tau_d);
+    }
+
+    public void updateMeasuredForce(double measuredForce) {this.measuredForce = measuredForce;}
 
     public void setUnsafeOutputSpeed(double unsafeSpeed)
     {
