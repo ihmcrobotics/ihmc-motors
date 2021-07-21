@@ -14,9 +14,9 @@ public class TMotorLowLevelController implements RobotController
 
     private double unsafeOutputSpeed;
 
-    private double desiredActuatorPosition;
-    private double desiredActuatorVelocity;
-    private double desiredActuatorTorque;
+    private YoDouble desiredActuatorPosition;
+    private YoDouble desiredActuatorVelocity;
+    private YoDouble desiredActuatorTorque;
 
     private final TMotor tMotor;
 
@@ -26,7 +26,6 @@ public class TMotorLowLevelController implements RobotController
     private final YoBoolean sendEnableMotorCommand;
     private final YoBoolean sendDisableMotorCommand;
     private final YoBoolean sendZeroMotorCommand;
-    private TPCANMsg motorCommandMsg = new TPCANMsg();
 
     // gains
     private final YoInteger motorPositionKp;
@@ -39,6 +38,10 @@ public class TMotorLowLevelController implements RobotController
     {
         this.tMotor = tMotor;
         this.registry = new YoRegistry(getClass().getSimpleName() + "_" + name);
+
+        desiredActuatorPosition = new YoDouble(name + "_desiredActuatorPosition", registry);
+        desiredActuatorVelocity = new YoDouble(name + "_desiredActuatorVelocity", registry);
+        desiredActuatorTorque = new YoDouble(name + "_desiredActuatorTorque", registry);
 
         sendEnableMotorCommand = new YoBoolean(name + "_sendEnableMotorCommand", registry);
         sendDisableMotorCommand = new YoBoolean(name + "_sendDisableMotorCommand", registry);
@@ -60,14 +63,11 @@ public class TMotorLowLevelController implements RobotController
     public void doControl()
     {
         if(isUserSendingPredefinedCommand() || isMotorInUnsafeState())
-        {
-            tMotor.setCommandedMsg(motorCommandMsg);
             return;
-        }
 
-        float desiredPosition = (float) desiredActuatorPosition;
-        float desiredVelocity = (float) desiredActuatorVelocity;
-        float desiredTorque = (float) desiredActuatorTorque;
+        float desiredPosition = (float) desiredActuatorPosition.getDoubleValue();
+        float desiredVelocity = (float) desiredActuatorVelocity.getDoubleValue();
+        float desiredTorque = (float) desiredActuatorTorque.getDoubleValue();
 
         double forceError = torqueToForce.getDesiredForce() - measuredForce;
         desiredTorque += motorTorqueKp.getDoubleValue() * (forceError * torqueToForce.getMotorPulleyRadius());
@@ -81,7 +81,7 @@ public class TMotorLowLevelController implements RobotController
     {
         if (sendEnableMotorCommand.getBooleanValue())
         {
-            motorCommandMsg = tMotor.getEnableMotorMsg();
+            tMotor.setCommandedMsg( tMotor.getEnableMotorMsg() );
             tMotor.getYoCANMsg().setSent(tMotor.getEnableMotorMsg().getData());
             sendEnableMotorCommand.set(false);
             return true;
@@ -89,7 +89,7 @@ public class TMotorLowLevelController implements RobotController
 
         if (sendDisableMotorCommand.getBooleanValue())
         {
-            motorCommandMsg = tMotor.getDisableMotorMsg();
+            tMotor.setCommandedMsg(  tMotor.getDisableMotorMsg() );
             tMotor.getYoCANMsg().setSent(tMotor.getDisableMotorMsg().getData());
             sendDisableMotorCommand.set(false);
             return true;
@@ -97,7 +97,7 @@ public class TMotorLowLevelController implements RobotController
 
         if (sendZeroMotorCommand.getBooleanValue())
         {
-            motorCommandMsg = tMotor.getZeroMotorMsg();
+            tMotor.setCommandedMsg( tMotor.getZeroMotorMsg() );
             tMotor.getYoCANMsg().setSent(tMotor.getZeroMotorMsg().getData());
             sendZeroMotorCommand.set(false);
             return true;
@@ -109,7 +109,7 @@ public class TMotorLowLevelController implements RobotController
     {
         if(motorIsInUnsafeState())
         {
-            motorCommandMsg = tMotor.getDisableMotorMsg();
+            tMotor.setCommandedMsg( tMotor.getDisableMotorMsg() );
             tMotor.getYoCANMsg().setSent(tMotor.getDisableMotorMsg().getData());
             return true;
         }
@@ -158,17 +158,17 @@ public class TMotorLowLevelController implements RobotController
 
     public void setDesiredPosition(double position)
     {
-        this.desiredActuatorPosition = position;
+        desiredActuatorPosition.set(position);
     }
 
     public void setDesiredVelocity(double velocity)
     {
-        this.desiredActuatorVelocity = velocity;
+        desiredActuatorVelocity.set(velocity);
     }
 
     public void setDesiredTorque(double torque)
     {
-        this.desiredActuatorTorque = torque;
+        desiredActuatorTorque.set(torque);
     }
 
     public TMotor getMotor(){return this.tMotor;}
