@@ -22,6 +22,7 @@ import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.sensors.TorqueToForceTransmission;
 import us.ihmc.tMotorCore.CANMessages.TMotorCANReplyMessage;
 import us.ihmc.tMotorCore.TMotor;
+import us.ihmc.tMotorCore.TMotorLowLevelController;
 import us.ihmc.tMotorCore.TMotorVersion;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
@@ -66,6 +67,7 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
    private final EL3104 analogInput;
    private final YoEL3104 yoEL3104;
    private final TMotor tMotor;
+   private final TMotorLowLevelController motorController;
    private final YoEnum<Slave.State> ek1100State = new YoEnum<>("ek1100State", registry, Slave.State.class);
    private final YoEnum<Slave.State> el3104State = new YoEnum<>("el3104State", registry, Slave.State.class);
 
@@ -95,6 +97,7 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
       yoEL3104 = new YoEL3104(analogInput, registry);
 //      tMotor = new TMotor(RobotSide.RIGHT, CAN_ID, TMotorVersion.AK109, DT, controllerTimeInSeconds, registry);
       tMotor = new TMotor(CAN_ID, "tMotor", TMotorVersion.AK109, DT, registry);
+      motorController = new TMotorLowLevelController("tMotorController", tMotor, registry);
       receivedMsg.setLength((byte) 6);
       alphaLoadcell.set(0.99);
 
@@ -135,7 +138,7 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
          {
             int id = TMotorCANReplyMessage.getID(receivedMsg);
             if(id == CAN_ID)
-               tMotor.read(receivedMsg);
+               motorController.read(receivedMsg);
          }
          else
          {
@@ -147,7 +150,7 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
 
    private void motorWrite()
    {
-      TPCANMsg motorCommand = tMotor.write();
+      TPCANMsg motorCommand = tMotor.getCommandedMsg();
       status = can.Write(channel, motorCommand);
       if (status != TPCANStatus.PCAN_ERROR_OK)
       {
@@ -215,7 +218,7 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
 
       torqueSensorProcessor.update();
 //      tMotor.setMeasuredForce(filteredTorque.getDoubleValue());
-      tMotor.update();  //controllerTimeInSeconds.getDoubleValue()
+      motorController.doControl();
 
       motorWrite();
    }
