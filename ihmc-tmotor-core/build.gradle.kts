@@ -27,7 +27,6 @@ testDependencies {
 
 tasks.getByPath("installDist").dependsOn("compositeJar")
 
-app.entrypoint("FootsoleTestBed", "us.ihmc.teststands.FootsoleTestBed")
 app.entrypoint("TMotorKtTestBed", "us.ihmc.teststands.TMotorKtTestBed")
 app.entrypoint("TMotorTestBed", "us.ihmc.teststands.TMotorTestBed")
 
@@ -40,7 +39,6 @@ tasks.create("deploy") {
                  put(file("build/install/${project.name}").toString(), "isa-testbed")
                  exec("chmod +x isa-testbed/bin/TMotorKtTestBed")
                  exec("chmod +x isa-testbed/bin/TMotorTestBed")
-                 exec("chmod +x isa-testbed/bin/FootsoleTestBed")
               }
    }
 }

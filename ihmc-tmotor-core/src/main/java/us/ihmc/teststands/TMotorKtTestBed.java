@@ -18,6 +18,7 @@ import us.ihmc.realtime.PriorityParameters;
 import us.ihmc.robotDataLogger.YoVariableServer;
 import us.ihmc.robotDataLogger.logger.DataServerSettings;
 import us.ihmc.robotics.math.filters.ButterworthFilteredYoVariable;
+import us.ihmc.robotics.math.functionGenerator.YoFunctionGenerator;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.sensors.TorqueToForceTransmission;
 import us.ihmc.tMotorCore.CANMessages.TMotorCANReplyMessage;
@@ -68,6 +69,7 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
    private final YoEL3104 yoEL3104;
    private final TMotor tMotor;
    private final TMotorLowLevelController motorController;
+   private final YoFunctionGenerator functionGenerator;
    private final YoEnum<Slave.State> ek1100State = new YoEnum<>("ek1100State", registry, Slave.State.class);
    private final YoEnum<Slave.State> el3104State = new YoEnum<>("el3104State", registry, Slave.State.class);
 
@@ -98,6 +100,11 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
 //      tMotor = new TMotor(RobotSide.RIGHT, CAN_ID, TMotorVersion.AK109, DT, controllerTimeInSeconds, registry);
       tMotor = new TMotor(CAN_ID, "tMotor", TMotorVersion.AK109, DT, registry);
       motorController = new TMotorLowLevelController("tMotorController", tMotor, registry);
+      motorController.setUnsafeOutputSpeed(16.0);
+
+      functionGenerator = new YoFunctionGenerator("functionGenerator", controllerTimeInSeconds, registry);
+      functionGenerator.setAlphaForSmoothing(0.99);
+
       receivedMsg.setLength((byte) 6);
       alphaLoadcell.set(0.99);
 
