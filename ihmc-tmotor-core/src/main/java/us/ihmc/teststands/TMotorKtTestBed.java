@@ -97,7 +97,6 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
       ek1100 = new EK1100(0, 0);
       analogInput = new EL3104(0, 1);
       yoEL3104 = new YoEL3104(analogInput, registry);
-//      tMotor = new TMotor(RobotSide.RIGHT, CAN_ID, TMotorVersion.AK109, DT, controllerTimeInSeconds, registry);
       tMotor = new TMotor(CAN_ID, "tMotor", TMotorVersion.AK109, DT, registry);
       motorController = new TMotorLowLevelController("tMotorController", tMotor, registry);
       motorController.setUnsafeOutputSpeed(12.0);
