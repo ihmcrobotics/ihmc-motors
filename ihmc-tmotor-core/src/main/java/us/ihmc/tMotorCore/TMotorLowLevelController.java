@@ -65,8 +65,6 @@ public class TMotorLowLevelController implements RobotController
         float desiredVelocity = (float) desiredActuatorVelocity.getDoubleValue();
         float desiredTorque = (float) desiredActuatorTorque.getDoubleValue();
 
-        desiredTorque += motorTorqueKp.getDoubleValue() * torqueError;
-
         tMotor.parseAndPack(getKp(), getKd(), desiredPosition, desiredVelocity, desiredTorque);
         tMotor.getYoCANMsg().setSent(tMotor.getControlMotorMsg().getData());
         tMotor.setCommandedMsg(tMotor.getControlMotorMsg());
