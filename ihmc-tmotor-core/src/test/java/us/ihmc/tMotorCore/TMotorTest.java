@@ -1,4 +1,4 @@
-package us.ihmc.gyemsCore;
+package us.ihmc.tMotorCore;
 
 public class TMotorTest
 {
