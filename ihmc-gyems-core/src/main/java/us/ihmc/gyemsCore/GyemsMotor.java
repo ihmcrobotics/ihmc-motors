@@ -36,7 +36,7 @@ public class GyemsMotor extends CANMotor
 
     public GyemsMotor(int ID, double dt, YoDouble time, YoRegistry parentRegistry)
     {
-        super(ID, dt, time, parentRegistry);
+        super(ID, dt);
 
         GyemsMotorParameters encoderParameters = new GyemsMotorParameters();
         motorReceiveMsg =  new GyemsMotorCANReceiveMessage(ID, encoderParameters);
@@ -54,13 +54,11 @@ public class GyemsMotor extends CANMotor
         motorTorqueKi = new YoInteger("motorTorqueKi", registry);
         setupPIDGains(50, 30, 90, 40, 40, 20);
 
-        desiredActuatorPosition.set(0.0);
         desiredMotorPosition.set(0);
 //        maximumMotorSpeed.set(0);    // maximumActuatorSpeed * GEAR_RATIO_TO_ONE * ENCODER_POSITION_RESOLUTION
 
         parentRegistry.addChild(registry);
     }
-
 
     /**
      * Set up position, velocity, and torque loop PI gains
@@ -148,8 +146,6 @@ public class GyemsMotor extends CANMotor
 
     public void update()
     {
-        desiredActuatorPosition.set(functionGenerator.getValue());
-        desiredActuatorVelocity.set(functionGenerator.getValueDot());
     }
 
    @Override
@@ -170,11 +166,12 @@ public class GyemsMotor extends CANMotor
 //           return motorReceiveMsg.getZeroMotorMsg();
 //       }
 
-       float desiredPosition = (float) desiredActuatorPosition.getDoubleValue();
-       float desiredVelocity = (float) desiredActuatorVelocity.getDoubleValue();
+        //TODO: need to make gyems work like TMOTOR and pull information from the message
+//       float desiredPosition = (float) desiredActuatorPosition.getDoubleValue();
+//       float desiredVelocity = (float) desiredActuatorVelocity.getDoubleValue();
        float desiredTorque = 0.0f;
 
-       motorReceiveMsg.parseAndPackControlMsg(desiredPosition, desiredVelocity, desiredTorque);
+//       motorReceiveMsg.parseAndPackControlMsg(desiredPosition, desiredVelocity, desiredTorque);
        yoCANMsg.setSent(motorReceiveMsg.getControlMotorPositionMsg().getData());
 
        return motorReceiveMsg.getControlMotorPositionMsg();
