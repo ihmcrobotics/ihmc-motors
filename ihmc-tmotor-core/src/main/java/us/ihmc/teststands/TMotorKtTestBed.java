@@ -184,13 +184,16 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
 
    private void setDesireds()
    {
-      motorController.setDesiredTorque(functionGenerator.getValue());
-      torqueToForce.update(functionGenerator.getValue());
-   }
+      double tau_d = functionGenerator.getValue();
 
-   private void setMeasuredForce(double measuredForce)
-   {
-      motorController.updateMeasuredForce(measuredForce);
+      torqueToForce.update(tau_d);
+      double torqueError = (torqueToForce.getDesiredForce() - filteredTorque.getDoubleValue()) * torqueToForce.getMotorPulleyRadius();
+      
+      tau_d += motorController.getTorqueKp() * torqueError;
+
+      motorController.setDesiredPosition(0);
+      motorController.setDesiredTorque(0);
+      motorController.setDesiredTorque(tau_d);
    }
 
    /**
@@ -237,7 +240,6 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
 
       torqueSensorProcessor.update();
       setDesireds();
-      setMeasuredForce(filteredTorque.getDoubleValue());
       motorController.doControl();
 
       motorWrite();
