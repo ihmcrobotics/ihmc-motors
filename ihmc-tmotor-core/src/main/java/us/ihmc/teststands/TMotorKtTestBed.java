@@ -190,8 +190,7 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
 
    private void setMeasuredForce(double measuredForce)
    {
-      double forceError = torqueToForce.getDesiredForce() - measuredForce;
-      motorController.setTorqueError(forceError * torqueToForce.getMotorPulleyRadius());
+      motorController.updateMeasuredForce(measuredForce);
    }
 
    /**

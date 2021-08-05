@@ -136,4 +136,6 @@ public class TMotor extends CANMotor
       return measuredTorqueCurrent.getDoubleValue();
    }
 
+   public int getDirection() { return motorDirection.getIntegerValue(); }
+
 }

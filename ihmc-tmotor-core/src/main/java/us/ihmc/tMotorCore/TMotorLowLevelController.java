@@ -18,8 +18,12 @@ public class TMotorLowLevelController implements RobotController
     private YoDouble desiredActuatorTorque;
 
     private final TMotor tMotor;
+    private double pulleyRadius = 0;
 
-    private double measuredForce = 0.0;
+    private final YoDouble controllerPositionKp;
+    private final YoDouble controllerTorqueKp;
+    private final YoDouble measuredPosition;
+    private final YoDouble measuredForce;
 
     private final YoBoolean sendEnableMotorCommand;
     private final YoBoolean sendDisableMotorCommand;
@@ -29,8 +33,9 @@ public class TMotorLowLevelController implements RobotController
     private final YoInteger motorPositionKp;
     private final YoInteger motorVelocityKd;
     private final YoDouble motorTorqueKp;
-    private double torqueError;
 
+    private final YoDouble positionError;
+    private final YoDouble torqueError;
 
     public TMotorLowLevelController(String name, TMotor tMotor, YoRegistry parentRegistry)
     {
@@ -45,9 +50,17 @@ public class TMotorLowLevelController implements RobotController
         sendDisableMotorCommand = new YoBoolean(name + "_sendDisableMotorCommand", registry);
         sendZeroMotorCommand = new YoBoolean(name + "_sendZeroMotorCommand", registry);
 
+        measuredPosition = new YoDouble(name + "_measuredPosition", registry);
+        measuredForce = new YoDouble(name + "_measuredForce", registry);
+
         motorPositionKp = new YoInteger(name + "_motorPositionKp", registry);
         motorVelocityKd = new YoInteger(name + "_motorVelocityKd", registry);
         motorTorqueKp = new YoDouble(name + "_motorTorqueKp", registry);
+        controllerPositionKp = new YoDouble(name + "_controllerPositionKp", registry);
+        controllerTorqueKp = new YoDouble(name + "_controllerTorqueKp", registry);
+
+        positionError = new YoDouble(name + "_positionError", registry);
+        torqueError = new YoDouble(name + "_torqueError", registry);
 
         parentRegistry.addChild(registry);
     }
@@ -65,7 +78,8 @@ public class TMotorLowLevelController implements RobotController
         float desiredVelocity = (float) desiredActuatorVelocity.getDoubleValue();
         float desiredTorque = (float) desiredActuatorTorque.getDoubleValue();
 
-        desiredTorque += motorTorqueKp.getDoubleValue() * torqueError;
+        desiredPosition += controllerPositionKp.getDoubleValue() * getPositionError();
+        desiredTorque += controllerTorqueKp.getDoubleValue() * getTorqueError();
 
         tMotor.parseAndPack(getKp(), getKd(), desiredPosition, desiredVelocity, desiredTorque);
         tMotor.getYoCANMsg().setSent(tMotor.getControlMotorMsg().getData());
@@ -140,7 +154,19 @@ public class TMotorLowLevelController implements RobotController
         tMotor.update();
     }
 
-    public void updateMeasuredForce(double measuredForce) {this.measuredForce = measuredForce;}
+    public void updateMeasuredForce(double measuredForce) {this.measuredForce.set(measuredForce);}
+
+    public void updateMeasuredPosition(double measuredPosition) {this.measuredPosition.set(measuredPosition);}
+
+    public double getPositionError() {
+        positionError.set(desiredActuatorPosition.getDoubleValue() - measuredPosition.getDoubleValue());
+        return positionError.getDoubleValue();
+    }
+
+    public double getTorqueError() {
+        torqueError.set(desiredActuatorTorque.getDoubleValue() - (measuredForce.getDoubleValue() * pulleyRadius));
+        return torqueError.getDoubleValue();
+    }
 
     public void setUnsafeOutputSpeed(double unsafeSpeed)
     {
@@ -164,16 +190,20 @@ public class TMotorLowLevelController implements RobotController
 
     public TMotor getMotor(){return this.tMotor;}
 
+    public void setPulleyRadius(double pulleyRadius) {
+        this.pulleyRadius = pulleyRadius;
+    }
+
     public double getMeasuredAppliedTorque()
     {
         return tMotor.getTorque();
     }
 
-    public double getMeasuredPosition() {return tMotor.getPosition();}
+    public double getMotorPosition() {return tMotor.getPosition();}
 
-    public double getMeasuredVelocity() {return tMotor.getVelocity();}
+    public double getMotorVelocity() {return tMotor.getVelocity();}
 
-    public double getMeasuredTorque() {return tMotor.getTorque();}
+    public double getMotorTorque() {return tMotor.getTorque();}
 
     public int getKp()
     {
@@ -186,8 +216,4 @@ public class TMotorLowLevelController implements RobotController
     }
 
     public double getTorqueKp(){return this.motorTorqueKp.getDoubleValue();}
-
-    public void setTorqueError(double torqueError) {
-        this.torqueError = torqueError;
-    }
 }
