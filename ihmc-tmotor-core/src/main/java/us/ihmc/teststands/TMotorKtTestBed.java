@@ -188,7 +188,7 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
 
       torqueToForce.update(tau_d);
       double torqueError = (torqueToForce.getDesiredForce() - filteredTorque.getDoubleValue()) * torqueToForce.getMotorPulleyRadius();
-      
+
       tau_d += motorController.getTorqueKp() * torqueError;
 
       motorController.setDesiredPosition(0);
