@@ -38,7 +38,7 @@ public class TMotorTestBed extends RealtimeThread
    private final YoLong canWriteTime = new YoLong("canWriteTime", registry);
    private final YoLong effectiveDT = new YoLong("effectiveDT", registry);
    private final YoDouble yoTime = new YoDouble("yoTime", registry);
-   
+
    private final YoLong readErrorCounter = new YoLong("readErrorCounter", registry);
    private final YoLong writeErrorCounter = new YoLong("writeErrorCounter", registry);
 
@@ -75,7 +75,6 @@ public class TMotorTestBed extends RealtimeThread
       yoVariableServer.setMainRegistry(registry, null);
 
       TMotor hipMotor = new TMotor(RIGHT_HIP_CAN_ID, "hipMotor", TMotorVersion.AK109, DT, registry);
-      hipMotor.setCanBus(can, channel);
       motors.put(hipMotor.getID(), hipMotor);
       TMotorLowLevelController hipController = new TMotorLowLevelController("hipController", hipMotor, registry);
       hipController.setUnsafeOutputSpeed(16.0);
@@ -84,7 +83,6 @@ public class TMotorTestBed extends RealtimeThread
       functionGenerator.setAlphaForSmoothing(0.99);
 
       TMotor kneeMotor = new TMotor(KNEE_CAN_ID, "kneeMotor", TMotorVersion.AK109, DT, registry);
-      kneeMotor.setCanBus(can, channel);
       motors.put(kneeMotor.getID(), kneeMotor);
       TMotorLowLevelController kneeController = new TMotorLowLevelController("kneeController", kneeMotor, registry);
       kneeController.setUnsafeOutputSpeed(16.0);
@@ -118,10 +116,10 @@ public class TMotorTestBed extends RealtimeThread
       {
          effectiveDT.set(System.nanoTime() - tickStartTimeInNanos.getLongValue());
          tickStartTimeInNanos.set(System.nanoTime());
-         
+
          yoTime.set(Conversions.nanosecondsToSeconds(tickStartTimeInNanos.getLongValue() - controllerStartTime));
-         
-         if(resetCounters.getBooleanValue()) 
+
+         if(resetCounters.getBooleanValue())
          {
             readErrorCounter.set(0);
             writeErrorCounter.set(0);
@@ -142,8 +140,8 @@ public class TMotorTestBed extends RealtimeThread
             long canWriteStartTime = System.nanoTime();
             write();
             canWriteTime.set(System.nanoTime() - canWriteStartTime);
-            
-            
+
+
             // TODO safe sentinel
          }
          // wait to free sent queue
@@ -152,7 +150,7 @@ public class TMotorTestBed extends RealtimeThread
          waitForNextPeriod();
       }
    }
-   
+
    private void read()
    {
       TPCANStatus readStatus = can.Read(channel, receivedMsg, null);
@@ -191,7 +189,7 @@ public class TMotorTestBed extends RealtimeThread
    {
       for(int id = 0; id < motorIDs.length; id++)
       {
-         TPCANMsg motorCommand = motors.get(motorIDs[id]).write();
+         TPCANMsg motorCommand = motors.get(motorIDs[id]).getCommandedMsg();
          status = can.Write(channel, motorCommand);
          if (status != TPCANStatus.PCAN_ERROR_OK)
          {

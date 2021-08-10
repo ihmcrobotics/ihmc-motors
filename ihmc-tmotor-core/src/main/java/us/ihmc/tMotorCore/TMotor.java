@@ -1,14 +1,11 @@
 package us.ihmc.tMotorCore;
 
-import peak.can.basic.PCANBasic;
-import peak.can.basic.TPCANHandle;
 import peak.can.basic.TPCANMsg;
 import us.ihmc.CAN.CANMotor;
 import us.ihmc.tMotorCore.CANMessages.TMotorCANReceiveMessage;
 import us.ihmc.tMotorCore.CANMessages.TMotorCANReplyMessage;
 import us.ihmc.tMotorCore.parameters.TMotorParameters;
 import us.ihmc.yoVariables.registry.YoRegistry;
-import us.ihmc.yoVariables.variable.YoInteger;
 
 public class TMotor extends CANMotor
 {
@@ -23,8 +20,6 @@ public class TMotor extends CANMotor
    private float desiredPosition;
    private float desiredVelocity;
    private float desiredTorque;
-
-   private final YoInteger motorDirection = new YoInteger("motorDirection", registry);
 
    public TMotor(int ID, String name, TMotorVersion version, double dt, YoRegistry parentRegistry)
    {
@@ -60,28 +55,12 @@ public class TMotor extends CANMotor
 
    }
 
-   @Override
-   public TPCANMsg write()
-   {
-      parseAndPack(kp, kd, desiredPosition, desiredVelocity, desiredTorque);
-      yoCANMsg.setSent(motorReceiveMsg.getControlMotorCommandData());
-
-      return commandedMsg;
-   }
-
-   @Override
-   public void setCanBus(PCANBasic canBus, TPCANHandle channel)
-   {
-      this.canBus = canBus;
-      this.channel = channel;
-   }
-
    public void parseAndPack(int kp, int kd, float desiredPosition, float desiredVelocity, float desiredTorque)
    {
       motorReceiveMsg.parseAndPackControlMsg((float)motorDirection.getValue() * desiredPosition,
                                              (float)motorDirection.getValue() * desiredVelocity,
-                                              (float)motorDirection.getValue() * desiredTorque,
-                                                            kp, kd);
+                                             (float)motorDirection.getValue() * desiredTorque,
+                                             kp, kd);
    }
 
    public void setCommandedMsg(TPCANMsg receiveMsg)
@@ -114,11 +93,6 @@ public class TMotor extends CANMotor
    public TPCANMsg getCommandedMsg()
    {
       return this.commandedMsg;
-   }
-
-   public int getID()
-   {
-      return ID;
    }
 
    public double getPosition()
