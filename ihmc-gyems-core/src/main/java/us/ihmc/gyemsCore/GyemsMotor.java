@@ -14,6 +14,7 @@ public class GyemsMotor extends CANMotor
     // Command messages for Gyems motor
     private final GyemsMotorCANReceiveMessage motorReceiveMsg;
     private final GyemsMotorCANReplyMessage motorReplyMsg;
+    private TPCANMsg commandedMsg;
 
     // gains
     private final YoInteger motorPositionKp;
@@ -28,15 +29,15 @@ public class GyemsMotor extends CANMotor
     private final YoInteger measuredTemperature;
 
     // limits
-//    private final YoDouble maximumActuatorSpeed = new YoDouble("maximumActuatorSpeed", registry);
-//    private final YoInteger maximumMotorSpeed = new YoInteger("maximumMotorSpeed", registry);
+    //    private final YoDouble maximumActuatorSpeed = new YoDouble("maximumActuatorSpeed", registry);
+    //    private final YoInteger maximumMotorSpeed = new YoInteger("maximumMotorSpeed", registry);
 
     //desired outputs
     private final YoInteger desiredMotorPosition = new YoInteger("desiredMotorPosition", registry);
 
-    public GyemsMotor(int ID, double dt, YoDouble time, YoRegistry parentRegistry)
+    public GyemsMotor(int ID, String name, double dt, YoRegistry parentRegistry)
     {
-        super(ID, dt);
+        super(ID, name, dt);
 
         GyemsMotorParameters encoderParameters = new GyemsMotorParameters();
         motorReceiveMsg =  new GyemsMotorCANReceiveMessage(ID, encoderParameters);
@@ -54,8 +55,9 @@ public class GyemsMotor extends CANMotor
         motorTorqueKi = new YoInteger("motorTorqueKi", registry);
         setupPIDGains(50, 30, 90, 40, 40, 20);
 
+        motorDirection.set(1);
         desiredMotorPosition.set(0);
-//        maximumMotorSpeed.set(0);    // maximumActuatorSpeed * GEAR_RATIO_TO_ONE * ENCODER_POSITION_RESOLUTION
+        //        maximumMotorSpeed.set(0);    // maximumActuatorSpeed * GEAR_RATIO_TO_ONE * ENCODER_POSITION_RESOLUTION
 
         parentRegistry.addChild(registry);
     }
@@ -135,9 +137,9 @@ public class GyemsMotor extends CANMotor
         motorReplyMsg.parseAndUnpack(message);
 
         measuredEncoderPosition.set(motorReplyMsg.getMeasuredEncoderPosition());
-        measuredActuatorPosition.set(motorReplyMsg.getMeasuredPosition());
-        measuredVelocity.set(motorReplyMsg.getMeasuredVelocity());
-        measuredTorqueCurrent.set(motorReplyMsg.getMeasuredTorque());
+        measuredActuatorPosition.set(motorDirection.getValue() * motorReplyMsg.getMeasuredPosition());
+        measuredVelocity.set(motorDirection.getValue() * motorReplyMsg.getMeasuredVelocity());
+        measuredTorqueCurrent.set(motorDirection.getValue() * motorReplyMsg.getMeasuredTorque());
         measuredTemperature.set(motorReplyMsg.getMeasuredTemperature());
 
         filteredVelocity.update();
@@ -146,34 +148,50 @@ public class GyemsMotor extends CANMotor
 
     public void update()
     {
+        //        desiredActuatorPosition.set(functionGenerator.getValue());
+        //        desiredActuatorVelocity.set(functionGenerator.getValueDot());
     }
 
-   @Override
-   public TPCANMsg write()
-   {
-       // update PID gains IF loop
-        if(requestPIDGainsUpdate)
-        {
-            requestPIDGainsUpdate = false;
-            yoCANMsg.setSent(motorReceiveMsg.getUpdatePIDGainsMsg().getData());
-            return motorReceiveMsg.getUpdatePIDGainsMsg();
-        }
+    public void parseAndPack(float desiredPosition, float desiredVelocity, float desiredTorque)
+    {
+        motorReceiveMsg.parseAndPackControlMsg((float)motorDirection.getValue() * desiredPosition,
+                                               (float)motorDirection.getValue() * desiredVelocity,
+                                               (float)motorDirection.getValue() * desiredTorque );
+    }
 
-//       if (sendZeroMotorCommand.getBooleanValue())
-//       {
-//           yoCANMsg.setSent(motorReceiveMsg.getZeroMotorCommandData());
-//           sendZeroMotorCommand.set(false);
-//           return motorReceiveMsg.getZeroMotorMsg();
-//       }
+    public boolean isRequestingPIDGainsUpdate()
+    {
+        return requestPIDGainsUpdate;
+    }
 
-        //TODO: need to make gyems work like TMOTOR and pull information from the message
-//       float desiredPosition = (float) desiredActuatorPosition.getDoubleValue();
-//       float desiredVelocity = (float) desiredActuatorVelocity.getDoubleValue();
-       float desiredTorque = 0.0f;
+    public void setRequestPIDGainsUpdate(boolean flag)
+    {
+        requestPIDGainsUpdate = flag;
+    }
 
-//       motorReceiveMsg.parseAndPackControlMsg(desiredPosition, desiredVelocity, desiredTorque);
-       yoCANMsg.setSent(motorReceiveMsg.getControlMotorPositionMsg().getData());
+    public void setCommandedMsg(TPCANMsg receiveMsg)
+    {
+        commandedMsg = receiveMsg;
+    }
 
-       return motorReceiveMsg.getControlMotorPositionMsg();
-   }
+    public TPCANMsg getCommandedMsg()
+    {
+        return this.commandedMsg;
+    }
+
+
+    public TPCANMsg getUpdatedPIDGainsMsg()
+    {
+        return motorReceiveMsg.getUpdatePIDGainsMsg();
+    }
+
+    public TPCANMsg getControlMotorMsg()
+    {
+        return motorReceiveMsg.getControlMotorPositionMsg();
+    }
+
+    public double getVelocity()
+    {
+        return measuredVelocity.getDoubleValue();
+    }
 }

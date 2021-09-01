@@ -18,10 +18,11 @@ import us.ihmc.realtime.PriorityParameters;
 import us.ihmc.robotDataLogger.YoVariableServer;
 import us.ihmc.robotDataLogger.logger.DataServerSettings;
 import us.ihmc.robotics.math.filters.ButterworthFilteredYoVariable;
-import us.ihmc.robotics.robotSide.RobotSide;
+import us.ihmc.robotics.math.functionGenerator.YoFunctionGenerator;
 import us.ihmc.sensors.TorqueToForceTransmission;
 import us.ihmc.tMotorCore.CANMessages.TMotorCANReplyMessage;
 import us.ihmc.tMotorCore.TMotor;
+import us.ihmc.tMotorCore.TMotorLowLevelController;
 import us.ihmc.tMotorCore.TMotorVersion;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
@@ -66,6 +67,9 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
    private final EL3104 analogInput;
    private final YoEL3104 yoEL3104;
    private final TMotor tMotor;
+   private final TMotorLowLevelController motorController;
+   private final TorqueToForceTransmission torqueToForce;
+   private final YoFunctionGenerator functionGenerator;
    private final YoEnum<Slave.State> ek1100State = new YoEnum<>("ek1100State", registry, Slave.State.class);
    private final YoEnum<Slave.State> el3104State = new YoEnum<>("el3104State", registry, Slave.State.class);
 
@@ -93,8 +97,15 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
       ek1100 = new EK1100(0, 0);
       analogInput = new EL3104(0, 1);
       yoEL3104 = new YoEL3104(analogInput, registry);
-//      tMotor = new TMotor(RobotSide.RIGHT, CAN_ID, TMotorVersion.AK109, DT, controllerTimeInSeconds, registry);
-      tMotor = new TMotor(CAN_ID, TMotorVersion.AK109, DT, registry);
+      tMotor = new TMotor(CAN_ID, "tMotor", TMotorVersion.AK109, DT, registry);
+      motorController = new TMotorLowLevelController("tMotorController", tMotor, registry);
+      motorController.setUnsafeOutputSpeed(12.0);
+
+      torqueToForce = new TorqueToForceTransmission(0.0508, "tMotor_", registry);
+
+      functionGenerator = new YoFunctionGenerator("functionGenerator", controllerTimeInSeconds, registry);
+      functionGenerator.setAlphaForSmoothing(0.99);
+
       receivedMsg.setLength((byte) 6);
       alphaLoadcell.set(0.99);
 
@@ -135,7 +146,7 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
          {
             int id = TMotorCANReplyMessage.getID(receivedMsg);
             if(id == CAN_ID)
-               tMotor.read(receivedMsg);
+               motorController.read(receivedMsg);
          }
          else
          {
@@ -147,7 +158,7 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
 
    private void motorWrite()
    {
-      TPCANMsg motorCommand = tMotor.write();
+      TPCANMsg motorCommand = tMotor.getCommandedMsg();
       status = can.Write(channel, motorCommand);
       if (status != TPCANStatus.PCAN_ERROR_OK)
       {
@@ -169,6 +180,20 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
       {
          e.printStackTrace();
       }
+   }
+
+   private void setDesireds()
+   {
+      double tau_d = functionGenerator.getValue();
+
+      torqueToForce.update(tau_d);
+      double torqueError = (torqueToForce.getDesiredForce() - filteredTorque.getDoubleValue()) * torqueToForce.getMotorPulleyRadius();
+
+      tau_d += motorController.getTorqueKp() * torqueError;
+
+      motorController.setDesiredPosition(0);
+      motorController.setDesiredTorque(0);
+      motorController.setDesiredTorque(tau_d);
    }
 
    /**
@@ -214,8 +239,8 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
       filteredTorque.update();
 
       torqueSensorProcessor.update();
-//      tMotor.setMeasuredForce(filteredTorque.getDoubleValue());
-      tMotor.update();  //controllerTimeInSeconds.getDoubleValue()
+      setDesireds();
+      motorController.doControl();
 
       motorWrite();
    }

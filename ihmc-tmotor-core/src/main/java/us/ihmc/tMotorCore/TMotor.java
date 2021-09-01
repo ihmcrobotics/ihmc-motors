@@ -1,15 +1,11 @@
 package us.ihmc.tMotorCore;
 
-import peak.can.basic.PCANBasic;
-import peak.can.basic.TPCANHandle;
 import peak.can.basic.TPCANMsg;
 import us.ihmc.CAN.CANMotor;
 import us.ihmc.tMotorCore.CANMessages.TMotorCANReceiveMessage;
 import us.ihmc.tMotorCore.CANMessages.TMotorCANReplyMessage;
 import us.ihmc.tMotorCore.parameters.TMotorParameters;
 import us.ihmc.yoVariables.registry.YoRegistry;
-import us.ihmc.yoVariables.variable.YoBoolean;
-import us.ihmc.yoVariables.variable.YoDouble;
 
 public class TMotor extends CANMotor
 {
@@ -17,8 +13,6 @@ public class TMotor extends CANMotor
    private final TMotorCANReplyMessage motorReplyMsg;          // CAN message reply from motor
    private TPCANMsg commandedMsg;
 
-   private final YoBoolean startTrajectory = new YoBoolean("startTrajectory", registry);
-   private final YoBoolean firstTimeInWalking = new YoBoolean("firstTimeInWalking", registry);
    private boolean durationHasChanged = false;
 
    private int kp;
@@ -27,13 +21,9 @@ public class TMotor extends CANMotor
    private float desiredVelocity;
    private float desiredTorque;
 
-   private final YoDouble loadtestWeight = new YoDouble("loadtestWeight", registry);
-   private final YoDouble percentGait = new YoDouble("percentGait", registry);
-
-   public TMotor(int ID, TMotorVersion version, double dt, YoRegistry parentRegistry)
+   public TMotor(int ID, String name, TMotorVersion version, double dt, YoRegistry parentRegistry)
    {
-      super(ID, dt);
-      String prefix = ID + "_";
+      super(ID, name, dt);
 
       TMotorParameters encoderParameters = version.getMotorParameters();
       motorReceiveMsg =  new TMotorCANReceiveMessage(ID, encoderParameters);
@@ -42,7 +32,7 @@ public class TMotor extends CANMotor
       velocityFilterCoefficient.setVariableBounds(0.0, 1.0);
       velocityFilterCoefficient.set(0.9);
 
-      firstTimeInWalking.set(true);
+      motorDirection.set(1);
       parentRegistry.addChild(registry);
    }
 
@@ -53,10 +43,10 @@ public class TMotor extends CANMotor
 
       motorReplyMsg.parseAndUnpack(message);
 
-      measuredActuatorPosition.set(motorReplyMsg.getMeasuredPosition());
-      measuredVelocity.set(motorReplyMsg.getMeasuredVelocity());
-      measuredTorqueCurrent.set(motorReplyMsg.getMeasuredTorque());
-
+      measuredEncoderPosition.set(motorReplyMsg.getMeasuredEncoderPosition());
+      measuredActuatorPosition.set(motorDirection.getValue() * motorReplyMsg.getMeasuredPosition());
+      measuredVelocity.set(motorDirection.getValue() * motorReplyMsg.getMeasuredVelocity());
+      measuredTorqueCurrent.set(motorDirection.getValue() * motorReplyMsg.getMeasuredTorque());
       filteredVelocity.update();
    }
 
@@ -65,25 +55,12 @@ public class TMotor extends CANMotor
 
    }
 
-   @Override
-   public TPCANMsg write()
-   {
-      motorReceiveMsg.parseAndPackControlMsg(desiredPosition, desiredVelocity, desiredTorque, kp, kd);
-      yoCANMsg.setSent(motorReceiveMsg.getControlMotorCommandData());
-
-      return motorReceiveMsg.getControlMotorMsg();
-   }
-
-   @Override
-   public void setCanBus(PCANBasic canBus, TPCANHandle channel)
-   {
-      this.canBus = canBus;
-      this.channel = channel;
-   }
-
    public void parseAndPack(int kp, int kd, float desiredPosition, float desiredVelocity, float desiredTorque)
    {
-      motorReceiveMsg.parseAndPackControlMsg(desiredPosition, desiredVelocity, desiredTorque, kp, kd);
+      motorReceiveMsg.parseAndPackControlMsg((float)motorDirection.getValue() * desiredPosition,
+                                             (float)motorDirection.getValue() * desiredVelocity,
+                                             (float)motorDirection.getValue() * desiredTorque,
+                                             kp, kd);
    }
 
    public void setCommandedMsg(TPCANMsg receiveMsg)
@@ -91,10 +68,7 @@ public class TMotor extends CANMotor
       commandedMsg = receiveMsg;
    }
 
-//   public void startTrajectoryGenerator()
-//   {
-//      walkingTrajectories.compute();
-//   }
+   public void reversePositiveMotorDirection() { motorDirection.set(-1); }
 
    public TPCANMsg getDisableMotorMsg()
    {
@@ -121,11 +95,6 @@ public class TMotor extends CANMotor
       return this.commandedMsg;
    }
 
-   public int getID()
-   {
-      return ID;
-   }
-
    public double getPosition()
    {
       return measuredActuatorPosition.getDoubleValue();
@@ -140,5 +109,7 @@ public class TMotor extends CANMotor
    {
       return measuredTorqueCurrent.getDoubleValue();
    }
+
+   public int getDirection() { return motorDirection.getIntegerValue(); }
 
 }

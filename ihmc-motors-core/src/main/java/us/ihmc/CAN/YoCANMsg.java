@@ -24,7 +24,7 @@ public class YoCANMsg
     private final YoInteger CANSentMessageBuffer6;
     private final YoInteger CANSentMessageBuffer7;
 
-    public YoCANMsg(String prefix, int ID, YoRegistry parentRegistry)
+    public YoCANMsg(String prefix, YoRegistry parentRegistry)
     {
        registry = new YoRegistry(prefix + getClass().getSimpleName());
        

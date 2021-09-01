@@ -1,16 +1,22 @@
 package us.ihmc.gyemsCore.teststands;
 
+import gnu.trove.map.hash.TIntObjectHashMap;
 import peak.can.basic.*;
 import us.ihmc.commons.Conversions;
+import us.ihmc.gyemsCore.CANMessages.GyemsMotorCANReplyMessage;
 import us.ihmc.gyemsCore.GyemsMotor;
+import us.ihmc.gyemsCore.GyemsMotorLowLevelController;
 import us.ihmc.realtime.*;
 import us.ihmc.robotDataLogger.YoVariableServer;
 import us.ihmc.robotDataLogger.logger.DataServerSettings;
+import us.ihmc.robotics.math.functionGenerator.YoFunctionGenerator;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoInteger;
 import us.ihmc.yoVariables.variable.YoLong;
+
+import java.util.HashMap;
 
 import static peak.can.basic.TPCANStatus.PCAN_ERROR_QRCVEMPTY;
 
@@ -36,8 +42,11 @@ public class GyemsMotorTestBed extends RealtimeThread
    private final YoLong writeErrorCounter = new YoLong("writeErrorCounter", registry);
 
    // motors in CAN bus
-   private final GyemsMotor motor;
+   private final TIntObjectHashMap<GyemsMotor> motors = new TIntObjectHashMap<>();
+   private final int[] motorIDs;
    private static final int RMDX8_CAN_ID = 0x141;
+   private final HashMap<GyemsMotor, GyemsMotorLowLevelController> motorControllers = new HashMap<>();
+   private final YoFunctionGenerator functionGenerator;
 
    // CAN-related goodies
    private PCANBasic can = new PCANBasic();
@@ -68,7 +77,15 @@ public class GyemsMotorTestBed extends RealtimeThread
       this.yoVariableServer = yoVariableServer;
       yoVariableServer.setMainRegistry(registry, null);
 
-      motor = new GyemsMotor(RMDX8_CAN_ID, DT, yoTime, registry);
+      GyemsMotor gyemsMotor = new GyemsMotor(RMDX8_CAN_ID, "GyemsMotor", DT, registry);
+      motors.put(gyemsMotor.getID(), gyemsMotor);
+      GyemsMotorLowLevelController gyemsController = new GyemsMotorLowLevelController("gyemsController", gyemsMotor, registry);
+      gyemsController.setUnsafeOutputSpeed(16.0);
+      motorControllers.put(gyemsMotor, gyemsController);
+      functionGenerator = new YoFunctionGenerator("functionGenerator", yoTime, registry);
+      functionGenerator.setAlphaForSmoothing(0.99);
+
+      motorIDs = motors.keys();
 
       justRead.set(false);
       receivedMsg.setLength((byte) 6);
@@ -88,7 +105,7 @@ public class GyemsMotorTestBed extends RealtimeThread
       }
       status = can.Initialize(channel, TPCANBaudrate.PCAN_BAUD_1M, TPCANType.PCAN_TYPE_NONE, 0, (short) 0);
       //     can.SetRcvEvent(channel);
-//      motor.sendPIDGainsToController(can, channel);
+      //      motor.sendPIDGainsToController(can, channel);
       initializeYoVariables();
    }
 
@@ -101,12 +118,30 @@ public class GyemsMotorTestBed extends RealtimeThread
       motorTorqueKp = (YoInteger) registry.findVariable("motorTorqueKp");
       motorTorqueKi = (YoInteger) registry.findVariable("motorTorqueKi");
 
-      motorPositionKp.addListener(e -> motor.updatePIDGains());
-      motorPositionKi.addListener(e -> motor.updatePIDGains());
-      motorVelocityKp.addListener(e -> motor.updatePIDGains());
-      motorVelocityKi.addListener(e -> motor.updatePIDGains());
-      motorTorqueKp.addListener(e -> motor.updatePIDGains());
-      motorTorqueKi.addListener(e -> motor.updatePIDGains());
+      motorPositionKp.addListener(e -> {
+         for(int i = 0; i < motorIDs.length; i++)
+            motors.get(motorIDs[i]).updatePIDGains();
+      });
+      motorPositionKi.addListener(e -> {
+         for(int i = 0; i < motorIDs.length; i++)
+            motors.get(motorIDs[i]).updatePIDGains();
+      });
+      motorVelocityKp.addListener(e -> {
+         for(int i = 0; i < motorIDs.length; i++)
+            motors.get(motorIDs[i]).updatePIDGains();
+      });
+      motorVelocityKi.addListener(e -> {
+         for(int i = 0; i < motorIDs.length; i++)
+            motors.get(motorIDs[i]).updatePIDGains();
+      });
+      motorTorqueKp.addListener(e -> {
+         for(int i = 0; i < motorIDs.length; i++)
+            motors.get(motorIDs[i]).updatePIDGains();
+      });
+      motorTorqueKi.addListener(e -> {
+         for(int i = 0; i < motorIDs.length; i++)
+            motors.get(motorIDs[i]).updatePIDGains();
+      });
    }
 
    @Override
@@ -117,10 +152,10 @@ public class GyemsMotorTestBed extends RealtimeThread
       {
          effectiveDT.set(System.nanoTime() - tickStartTimeInNanos.getLongValue());
          tickStartTimeInNanos.set(System.nanoTime());
-         
+
          yoTime.set(Conversions.nanosecondsToSeconds(tickStartTimeInNanos.getLongValue() - controllerStartTime));
-         
-         if(resetCounters.getBooleanValue()) 
+
+         if(resetCounters.getBooleanValue())
          {
             readErrorCounter.set(0);
             writeErrorCounter.set(0);
@@ -141,8 +176,8 @@ public class GyemsMotorTestBed extends RealtimeThread
             long canWriteStartTime = System.nanoTime();
             write();
             canWriteTime.set(System.nanoTime() - canWriteStartTime);
-            
-            
+
+
             // TODO safe sentinel
          }
          // wait to free sent queue
@@ -151,7 +186,7 @@ public class GyemsMotorTestBed extends RealtimeThread
          waitForNextPeriod();
       }
    }
-   
+
    private void read()
    {
       TPCANStatus readStatus = can.Read(channel, receivedMsg, null);
@@ -161,7 +196,9 @@ public class GyemsMotorTestBed extends RealtimeThread
       {
          if (readStatus == TPCANStatus.PCAN_ERROR_OK)
          {
-            motor.read(receivedMsg);
+            int id = GyemsMotorCANReplyMessage.getID(receivedMsg);
+            if(motors.containsKey(id))
+               motors.get(id).read(receivedMsg);
             messagesInReadBus.increment();
          }
          else
@@ -174,20 +211,37 @@ public class GyemsMotorTestBed extends RealtimeThread
 
    private void compute()
    {
-      motor.update();
+      for(int id = 0; id < motorIDs.length; id++)
+      {
+         motorControllers.get(motors.get(motorIDs[id])).setDesiredPosition(functionGenerator.getValue());
+         motorControllers.get(motors.get(motorIDs[id])).setDesiredVelocity(functionGenerator.getValueDot());
+         motorControllers.get(motors.get(motorIDs[id])).setDesiredTorque(0.0);
+
+         motorControllers.get(motors.get(motorIDs[id])).doControl();
+      }
    }
 
    private void write()
    {
       if(justRead.getBooleanValue())
       {
-         TPCANMsg motorCommand = motor.requestRead();
-         status = can.Write(channel, motorCommand);
+         for(int id = 0; id < motorIDs.length; id++)
+         {
+            TPCANMsg motorCommand = motors.get(motorIDs[id]).requestRead();
+            status = can.Write(channel, motorCommand);
+         }
       }
       else
       {
-         TPCANMsg motorCommand = motor.write();
-         status = can.Write(channel, motorCommand);
+         for(int id = 0; id < motorIDs.length; id++)
+         {
+            TPCANMsg motorCommand = motors.get(motorIDs[id]).getCommandedMsg();
+            status = can.Write(channel, motorCommand);
+            if (status != TPCANStatus.PCAN_ERROR_OK)
+            {
+               writeErrorCounter.increment();
+            }
+         }
       }
       if (status != TPCANStatus.PCAN_ERROR_OK)
       {

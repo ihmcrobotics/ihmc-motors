@@ -7,6 +7,7 @@ import peak.can.basic.TPCANMsg;
 import us.ihmc.robotics.math.filters.FilteredVelocityYoVariable;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
+import us.ihmc.yoVariables.variable.YoInteger;
 
 public abstract class CANMotor
 {
@@ -18,6 +19,7 @@ public abstract class CANMotor
    protected TPCANHandle channel;
    protected final TPCANMsg receivedMsg = new TPCANMsg();
    protected final int ID;
+   protected final String motorName;
 
    // inputs
    protected final YoDouble measuredEncoderPosition;
@@ -29,19 +31,22 @@ public abstract class CANMotor
 
    protected final FilteredVelocityYoVariable filteredVelocity;
 
+   protected final YoInteger motorDirection;
+
    // debug
    protected final YoCANMsg yoCANMsg;
 
    protected static final byte STANDARD_CAN_MESSAGE = TPCANMessageType.PCAN_MESSAGE_STANDARD.getValue();
-//   protected final YoFunctionGenerator functionGenerator;
+   //   protected final YoFunctionGenerator functionGenerator;
 
-   public CANMotor(int ID, double dt)
+   public CANMotor(int id, String motorName, double dt)
    {
-      this.ID = ID;
-      String prefix = ID +"_";
+      this.ID = id;
+      this.motorName = motorName;
+      String prefix = motorName +"_";
 
       registry = new YoRegistry(prefix + name);
-      yoCANMsg = new YoCANMsg(prefix, ID, registry);
+      yoCANMsg = new YoCANMsg(motorName, registry);
 
       measuredEncoderPosition = new YoDouble(prefix + "measuredEncoderPosition", registry); // encoder tick value
       measuredActuatorPosition = new YoDouble(prefix + "measuredActuatorPosition", registry); // rad
@@ -52,8 +57,9 @@ public abstract class CANMotor
 
       filteredVelocity = new FilteredVelocityYoVariable(prefix + "filteredVelocity", null, velocityFilterCoefficient, measuredActuatorPosition, dt, registry);
 
-//      functionGenerator = new YoFunctionGenerator(prefix + "functionGenerator", time, registry);
-//      functionGenerator.setAlphaForSmoothing(0.99);
+      motorDirection = new YoInteger(prefix + "motorDirection", registry);
+      //      functionGenerator = new YoFunctionGenerator(prefix + "functionGenerator", time, registry);
+      //      functionGenerator.setAlphaForSmoothing(0.99);
    }
 
    /**
@@ -65,9 +71,9 @@ public abstract class CANMotor
 
    public abstract void update();
 
-   public abstract TPCANMsg write();
-
-   public abstract void setCanBus(PCANBasic canBus, TPCANHandle channel);
+   //   public abstract TPCANMsg write();
 
    public YoCANMsg getYoCANMsg() {return this.yoCANMsg;}
+
+   public int getID(){ return ID;}
 }
