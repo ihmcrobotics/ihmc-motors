@@ -1,6 +1,6 @@
 pluginManagement {
    plugins {
-      id("us.ihmc.ihmc-build") version "0.25.0"
+      id("us.ihmc.ihmc-build") version "0.26.4"
    }
 }
 
@@ -10,13 +10,10 @@ buildscript {
       mavenLocal()
    }
    dependencies {
-      classpath("us.ihmc:ihmc-build:0.25.0")
+      classpath("us.ihmc:ihmc-build:0.26.4")
    }
 }
 
-/**
- * Browse source at https://github.com/ihmcrobotics/ihmc-build
- */
 val ihmcSettingsConfigurator = us.ihmc.build.IHMCSettingsConfigurator(settings, logger, extra)
 ihmcSettingsConfigurator.checkRequiredPropertiesAreSet()
 ihmcSettingsConfigurator.configureExtraSourceSets()

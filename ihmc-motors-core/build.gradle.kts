@@ -3,8 +3,10 @@ plugins {
    id("us.ihmc.ihmc-ci") version "7.4"
    id("us.ihmc.ihmc-cd") version "1.20"
    id("us.ihmc.log-tools-plugin") version "0.6.1"
-   id("org.hidetake.ssh") version "2.1.1"
 }
+
+val artifactoryUsername: String by project
+val artifactoryPassword: String by project
 
 ihmc {
    loadProductProperties("../product.properties")
