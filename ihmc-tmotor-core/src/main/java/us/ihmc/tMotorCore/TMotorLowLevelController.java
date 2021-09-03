@@ -252,4 +252,14 @@ public class TMotorLowLevelController implements RobotController
    {
       return this.motorTorqueKp.getDoubleValue();
    }
+
+   public void sendEnableMotorCommand()
+   {
+      sendEnableMotorCommand.set(true);
+   }
+
+   public void sendDisableMotorCommand()
+   {
+      sendDisableMotorCommand.set(true);
+   }
 }
