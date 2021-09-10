@@ -11,11 +11,15 @@ public class TMotorCANReceiveMessage
 {
     private static final byte STANDARD_CAN_MESSAGE = TPCANMessageType.PCAN_MESSAGE_STANDARD.getValue();
 
-    private enum MotorStatus{ENABLE_MOTOR, DISABLE_MOTOR, ZERO_MOTOR_POSITION, CONTROL_MOTOR}
+    private enum MotorStatus
+    {
+        ENABLE_MOTOR, DISABLE_MOTOR, ZERO_MOTOR_POSITION, CONTROL_MOTOR
+    }
+
     private final HashMap<MotorStatus, TPCANMsg> motorCANControlMsg = new HashMap<>();
 
     // commands that are updated at each tick
-    private byte[] updatedMotorControlCommand = new byte[] {0x7F, (byte) 0xFF, 0x7F, (byte) 0xF0, 0x00, 0x00, 0x07, (byte) 0xFF};
+    private final byte[] updatedMotorControlCommand = new byte[] {0x7F, (byte) 0xFF, 0x7F, (byte) 0xF0, 0x00, 0x00, 0x07, (byte) 0xFF};
     private TPCANMsg controlMotorCommandMsg;
 
     private final float MIN_POSITION;

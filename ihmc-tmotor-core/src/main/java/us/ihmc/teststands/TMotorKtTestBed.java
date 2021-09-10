@@ -118,7 +118,10 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
       registerSlave(analogInput);
 
       filteredTorque = new ButterworthFilteredYoVariable("filteredTorque",
-              registry, alphaLoadcell, torqueSensorProcessor.getResultYoVariable(), ButterworthFilteredYoVariable.ButterworthFilterType.LOW_PASS);
+                                                         registry,
+                                                         alphaLoadcell,
+                                                         torqueSensorProcessor.getResultYoVariable(),
+                                                         ButterworthFilteredYoVariable.ButterworthFilterType.LOW_PASS);
    }
 
    private void initialize()
