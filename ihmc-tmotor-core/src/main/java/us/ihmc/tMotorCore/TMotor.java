@@ -102,6 +102,11 @@ public class TMotor extends CANMotor
       return measuredVelocity.getDoubleValue();
    }
 
+   public double getFilteredVelocity()
+   {
+      return filteredVelocity.getValue();
+   }
+
    public double getTorque()
    {
       return measuredTorque.getDoubleValue();
