@@ -13,13 +13,12 @@ public class TMotor extends CANMotor
    private final TMotorCANReplyMessage motorReplyMsg;          // CAN message reply from motor
    private TPCANMsg commandedMsg;
 
-   private boolean durationHasChanged = false;
-
-   private int kp;
-   private int kd;
-   private float desiredPosition;
-   private float desiredVelocity;
-   private float desiredTorque;
+   /**
+    * The T-Motor firmware uses at Kt=0.095 Nm/A, however on the benchtop they were determined to have Kt=0.16 Nm/A
+    * Note that a Kt that is too small will lead to a current that is too high, since current = torque / Kt.
+    * We therefore need to send torques scaled down and read them scaled up by this factor.
+    */
+   static final double TORQUE_SCALING = 0.095 / 0.16;
 
    public TMotor(int ID, String name, TMotorVersion version, double dt, YoRegistry parentRegistry)
    {
@@ -28,8 +27,6 @@ public class TMotor extends CANMotor
       TMotorParameters encoderParameters = version.getMotorParameters();
       motorReceiveMsg =  new TMotorCANReceiveMessage(ID, encoderParameters);
       motorReplyMsg = new TMotorCANReplyMessage(encoderParameters);
-
-      velocityFilterCoefficient.setVariableBounds(0.0, 1.0);
       velocityFilterCoefficient.set(0.9);
 
       motorDirection.set(1);
@@ -40,13 +37,12 @@ public class TMotor extends CANMotor
    public void read(TPCANMsg message)
    {
       yoCANMsg.setReceived(message);
-
       motorReplyMsg.parseAndUnpack(message);
 
       measuredEncoderPosition.set(motorReplyMsg.getMeasuredEncoderPosition());
       measuredActuatorPosition.set(motorDirection.getValue() * motorReplyMsg.getMeasuredPosition());
       measuredVelocity.set(motorDirection.getValue() * motorReplyMsg.getMeasuredVelocity());
-      measuredTorqueCurrent.set(motorDirection.getValue() * motorReplyMsg.getMeasuredTorque());
+      measuredTorque.set(motorDirection.getValue() * motorReplyMsg.getMeasuredTorque() / TORQUE_SCALING);
       filteredVelocity.update();
    }
 
@@ -57,10 +53,11 @@ public class TMotor extends CANMotor
 
    public void parseAndPack(int kp, int kd, float desiredPosition, float desiredVelocity, float desiredTorque)
    {
-      motorReceiveMsg.parseAndPackControlMsg((float)motorDirection.getValue() * desiredPosition,
-                                             (float)motorDirection.getValue() * desiredVelocity,
-                                             (float)motorDirection.getValue() * desiredTorque,
-                                             kp, kd);
+      motorReceiveMsg.parseAndPackControlMsg((float) motorDirection.getValue() * desiredPosition,
+                                             (float) motorDirection.getValue() * desiredVelocity,
+                                             (float) (motorDirection.getValue() * desiredTorque * TORQUE_SCALING),
+                                             kp,
+                                             kd);
    }
 
    public void setCommandedMsg(TPCANMsg receiveMsg)
@@ -105,11 +102,19 @@ public class TMotor extends CANMotor
       return measuredVelocity.getDoubleValue();
    }
 
-   public double getTorque()
+   public double getFilteredVelocity()
    {
-      return measuredTorqueCurrent.getDoubleValue();
+      return filteredVelocity.getValue();
    }
 
-   public int getDirection() { return motorDirection.getIntegerValue(); }
+   public double getTorque()
+   {
+      return measuredTorque.getDoubleValue();
+   }
+
+   public int getDirection()
+   {
+      return motorDirection.getIntegerValue();
+   }
 
 }

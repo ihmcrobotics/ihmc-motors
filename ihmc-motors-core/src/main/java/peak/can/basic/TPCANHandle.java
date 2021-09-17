@@ -31,6 +31,9 @@ package peak.can.basic;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.HashMap;
+import java.util.Map;
+
 
 /**
  * Represents a PCAN-hardware channel handle.
@@ -281,4 +284,19 @@ public enum TPCANHandle
         return false;
     }
     private final short value;
+
+
+    private static final Map<Short, TPCANHandle> shortToTypeMap = new HashMap<>();
+    static {
+        for (TPCANHandle type : TPCANHandle.values()) {
+            shortToTypeMap.put(type.value, type);
+        }
+    }
+
+    public static TPCANHandle fromShort(short i) {
+        TPCANHandle type = shortToTypeMap.get(Short.valueOf(i));
+        if (type == null)
+            return PCAN_NONEBUS;
+        return type;
+    }
 };

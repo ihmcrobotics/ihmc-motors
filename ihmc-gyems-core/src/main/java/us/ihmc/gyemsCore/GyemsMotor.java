@@ -6,7 +6,6 @@ import us.ihmc.gyemsCore.CANMessages.GyemsMotorCANReceiveMessage;
 import us.ihmc.gyemsCore.CANMessages.GyemsMotorCANReplyMessage;
 import us.ihmc.gyemsCore.parameters.GyemsMotorParameters;
 import us.ihmc.yoVariables.registry.YoRegistry;
-import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoInteger;
 
 public class GyemsMotor extends CANMotor
@@ -139,7 +138,7 @@ public class GyemsMotor extends CANMotor
         measuredEncoderPosition.set(motorReplyMsg.getMeasuredEncoderPosition());
         measuredActuatorPosition.set(motorDirection.getValue() * motorReplyMsg.getMeasuredPosition());
         measuredVelocity.set(motorDirection.getValue() * motorReplyMsg.getMeasuredVelocity());
-        measuredTorqueCurrent.set(motorDirection.getValue() * motorReplyMsg.getMeasuredTorque());
+        measuredTorque.set(motorDirection.getValue() * motorReplyMsg.getMeasuredTorque());
         measuredTemperature.set(motorReplyMsg.getMeasuredTemperature());
 
         filteredVelocity.update();
