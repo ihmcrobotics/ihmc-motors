@@ -18,7 +18,7 @@ public class TMotor extends CANMotor
     * Note that a Kt that is too small will lead to a current that is too high, since current = torque / Kt.
     * We therefore need to send torques scaled down and read them scaled up by this factor.
     */
-   static final double TORQUE_SCALING = 0.095 / 0.16;
+   static final double TORQUE_SCALING = 1.0; // 0.095 / 0.16; //
 
    public TMotor(int ID, String name, TMotorVersion version, double dt, YoRegistry parentRegistry)
    {

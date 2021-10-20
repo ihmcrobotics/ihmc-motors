@@ -79,8 +79,8 @@ public class TMotorLowLevelController implements RobotController
       float desiredTorque = (float) desiredActuatorTorque.getDoubleValue();
 
       // TODO: why is this +=? and why is desired position changing with position error?
-      desiredPosition += controllerPositionKp.getDoubleValue() * getPositionError();
-      desiredTorque += controllerTorqueKp.getDoubleValue() * getTorqueError();
+//      desiredPosition += controllerPositionKp.getDoubleValue() * getPositionError();
+//      desiredTorque += controllerTorqueKp.getDoubleValue() * getTorqueError();
 
       tMotor.parseAndPack(getKp(), getKd(), desiredPosition, desiredVelocity, desiredTorque);
       tMotor.getYoCANMsg().setSent(tMotor.getControlMotorMsg().getData());

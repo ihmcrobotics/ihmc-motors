@@ -12,6 +12,8 @@ public class TMotorAK606Parameters implements TMotorParameters
     private final static float MAXIMUM_KP = 500;
     private final static float MAXIMUM_KD = 100;
 
+    private final static float TORQUE_RATIO = 1.0f;
+
     private final static int GEAR_RATIO_TO_ONE = 6;
 
     public TMotorAK606Parameters()
@@ -60,4 +62,9 @@ public class TMotorAK606Parameters implements TMotorParameters
         return MAXIMUM_KD;
     }
 
+    @Override
+    public float getTorqueRatio()
+    {
+        return TORQUE_RATIO;
+    }
 }
