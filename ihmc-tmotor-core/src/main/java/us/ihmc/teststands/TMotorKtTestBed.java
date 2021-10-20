@@ -17,9 +17,10 @@ import us.ihmc.realtime.MonotonicTime;
 import us.ihmc.realtime.PriorityParameters;
 import us.ihmc.robotDataLogger.YoVariableServer;
 import us.ihmc.robotDataLogger.logger.DataServerSettings;
+import us.ihmc.robotics.math.filters.AlphaFilteredYoVariable;
 import us.ihmc.robotics.math.filters.ButterworthFilteredYoVariable;
 import us.ihmc.robotics.math.functionGenerator.YoFunctionGenerator;
-import us.ihmc.sensors.TorqueToForceTransmission;
+import us.ihmc.robotics.math.functionGenerator.YoFunctionGeneratorNew;
 import us.ihmc.tMotorCore.CANMessages.TMotorCANReplyMessage;
 import us.ihmc.tMotorCore.TMotor;
 import us.ihmc.tMotorCore.TMotorLowLevelController;
@@ -68,17 +69,17 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
    private final YoEL3104 yoEL3104;
    private final TMotor tMotor;
    private final TMotorLowLevelController motorController;
-   private final TorqueToForceTransmission torqueToForce;
-   private final YoFunctionGenerator functionGenerator;
+   private final YoFunctionGeneratorNew functionGenerator;
    private final YoEnum<Slave.State> ek1100State = new YoEnum<>("ek1100State", registry, Slave.State.class);
    private final YoEnum<Slave.State> el3104State = new YoEnum<>("el3104State", registry, Slave.State.class);
 
    // CAN-related goodies
    private PCANBasic can = new PCANBasic();
-   private final TPCANHandle channel = TPCANHandle.PCAN_PCIBUS1;
+   private final TPCANHandle channel1 = TPCANHandle.PCAN_PCIBUS1;
+   private final TPCANHandle channel2 = TPCANHandle.PCAN_PCIBUS2;
    private final TPCANMsg receivedMsg = new TPCANMsg();
    private TPCANStatus status = null;
-   private static final int CAN_ID = 2;
+   private static final int CAN_ID = 11; // 10; // 1; //  2; // 9; //
 
    private final YoAnalogSignalWrapper torqueSensorProcessor;
    private final ButterworthFilteredYoVariable filteredTorque;
@@ -101,21 +102,21 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
       motorController = new TMotorLowLevelController("tMotorController", tMotor, registry);
       motorController.setUnsafeOutputSpeed(12.0);
 
-      torqueToForce = new TorqueToForceTransmission(0.0508, "tMotor_", registry);
-
-      functionGenerator = new YoFunctionGenerator("functionGenerator", controllerTimeInSeconds, registry);
-      functionGenerator.setAlphaForSmoothing(0.99);
-
+      functionGenerator = new YoFunctionGeneratorNew("functionGenerator", DT, registry);
+      
       receivedMsg.setLength((byte) 6);
-      alphaLoadcell.set(0.99);
+
+      double alpha = AlphaFilteredYoVariable.computeAlphaGivenBreakFrequencyProperly(140, DT);
+      alphaLoadcell.set(alpha);
 
       ek1100State.set(ek1100.getState());
       el3104State.set(analogInput.getState());
 
       torqueSensorProcessor = new YoAnalogSignalWrapper("torqueCell", yoEL3104, 0, registry);
-      torqueSensorProcessor.setCoeffs(-7.0, 1140.0, 0.0); // .setCoeffs(2.0, 200.0 / 5.0, 0.0);
+      torqueSensorProcessor.setCoeffs(2.0, 200.0 / 5.0, 0.0); // .setCoeffs(-7.0, 1140.0, 0.0); //
       registerSlave(ek1100);
       registerSlave(analogInput);
+      setRequireAllSlaves(false);
 
       filteredTorque = new ButterworthFilteredYoVariable("filteredTorque",
                                                          registry,
@@ -135,15 +136,20 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
       {
          System.out.println("CAN API has been initialized");
       }
-      status = can.Initialize(channel, TPCANBaudrate.PCAN_BAUD_1M, TPCANType.PCAN_TYPE_NONE, 0, (short) 0);
+
+      status = can.Initialize(channel1, TPCANBaudrate.PCAN_BAUD_1M, TPCANType.PCAN_TYPE_NONE, 0, (short) 0);
+      LogTools.info("channel 1 " + channel1.getValue() + " initialized. Status: " + status);
+
+      status = can.Initialize(channel2, TPCANBaudrate.PCAN_BAUD_1M, TPCANType.PCAN_TYPE_NONE, 0, (short) 0);
+      LogTools.info("channel 2 " + channel2.getValue() + " initialized. Status: " + status);
+
       //     can.SetRcvEvent(channel);
    }
 
    private void motorRead()
    {
-      TPCANStatus readStatus = can.Read(channel, receivedMsg, null);
-
-      while(readStatus != PCAN_ERROR_QRCVEMPTY)
+      TPCANStatus readStatus;
+      while((readStatus = can.Read(channel2, receivedMsg, null)) != PCAN_ERROR_QRCVEMPTY)
       {
          if (readStatus == TPCANStatus.PCAN_ERROR_OK)
          {
@@ -155,14 +161,13 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
          {
             readErrorCounter.increment();
          }
-         readStatus = can.Read(channel, receivedMsg, null);
       }
    }
 
    private void motorWrite()
    {
       TPCANMsg motorCommand = tMotor.getCommandedMsg();
-      status = can.Write(channel, motorCommand);
+      status = can.Write(channel2, motorCommand);
       if (status != TPCANStatus.PCAN_ERROR_OK)
       {
          writeErrorCounter.increment();
@@ -187,15 +192,11 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
 
    private void setDesireds()
    {
+      functionGenerator.update();
       double tau_d = functionGenerator.getValue();
 
-      torqueToForce.update(tau_d);
-      double torqueError = (torqueToForce.getDesiredForce() - filteredTorque.getDoubleValue()) * torqueToForce.getMotorPulleyRadius();
-
-      tau_d += motorController.getTorqueKp() * torqueError;
-
-      motorController.setDesiredPosition(0);
-      motorController.setDesiredTorque(0);
+      motorController.setDesiredPosition(0.0);
+      motorController.setDesiredVelocity(0.0);
       motorController.setDesiredTorque(tau_d);
    }
 
@@ -233,7 +234,6 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
    @Override
    protected void doControl()
    {
-
       controllerTimeInNanos.set(getCurrentCycleTimestamp() - getInitTimestamp());
       controllerTimeInSeconds.set(Conversions.nanosecondsToSeconds(getCurrentCycleTimestamp() - getInitTimestamp()));
 
