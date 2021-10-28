@@ -14,11 +14,12 @@ public class TMotor extends CANMotor
    private TPCANMsg commandedMsg;
 
    /**
-    * The T-Motor firmware uses at Kt=0.095 Nm/A, however on the benchtop they were determined to have Kt=0.16 Nm/A
-    * Note that a Kt that is too small will lead to a current that is too high, since current = torque / Kt.
-    * We therefore need to send torques scaled down and read them scaled up by this factor.
+    * The T-Motor firmware uses at Kt=0.095 Nm/A, but this is under-approximated. This multiplier can be used to adjust to the actual Kt.
+    *
+    * Desired torques will be scaled by this value before being sent to the motor controller, and the motor controller's reported torque
+    * will be scaled down by this value.
     */
-   static final double TORQUE_SCALING = 1.0; // 0.095 / 0.16; //
+   private double torqueScale = 1.0;
 
    public TMotor(int ID, String name, TMotorVersion version, double dt, YoRegistry parentRegistry)
    {
@@ -42,8 +43,9 @@ public class TMotor extends CANMotor
       measuredEncoderPosition.set(motorReplyMsg.getMeasuredEncoderPosition());
       measuredActuatorPosition.set(motorDirection.getValue() * motorReplyMsg.getMeasuredPosition());
       measuredVelocity.set(motorDirection.getValue() * motorReplyMsg.getMeasuredVelocity());
-      measuredTorque.set(motorDirection.getValue() * motorReplyMsg.getMeasuredTorque() / TORQUE_SCALING);
+      measuredTorque.set(motorDirection.getValue() * motorReplyMsg.getMeasuredTorque() / torqueScale);
       filteredVelocity.update();
+      filteredTorque.update();
    }
 
    public void update()
@@ -55,7 +57,7 @@ public class TMotor extends CANMotor
    {
       motorReceiveMsg.parseAndPackControlMsg((float) motorDirection.getValue() * desiredPosition,
                                              (float) motorDirection.getValue() * desiredVelocity,
-                                             (float) (motorDirection.getValue() * desiredTorque * TORQUE_SCALING),
+                                             (float) (motorDirection.getValue() * desiredTorque * torqueScale),
                                              kp,
                                              kd);
    }
@@ -112,9 +114,18 @@ public class TMotor extends CANMotor
       return measuredTorque.getDoubleValue();
    }
 
+   public double getFilteredTorque()
+   {
+      return filteredTorque.getDoubleValue();
+   }
+
    public int getDirection()
    {
       return motorDirection.getIntegerValue();
    }
 
+   public void setTorqueScale(double torqueScaling)
+   {
+      this.torqueScale = torqueScaling;
+   }
 }

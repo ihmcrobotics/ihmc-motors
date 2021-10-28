@@ -2,6 +2,7 @@ package us.ihmc.CAN;
 
 import peak.can.basic.TPCANHandle;
 import peak.can.basic.TPCANMsg;
+import us.ihmc.robotics.math.filters.AlphaFilteredYoVariable;
 import us.ihmc.robotics.math.filters.FilteredVelocityYoVariable;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
@@ -24,6 +25,7 @@ public abstract class CANMotor
    protected final YoDouble measuredVelocity;
 
    protected final YoDouble measuredTorque;
+   protected final AlphaFilteredYoVariable filteredTorque;
    protected final YoDouble velocityFilterCoefficient;
 
    protected final FilteredVelocityYoVariable filteredVelocity;
@@ -47,6 +49,7 @@ public abstract class CANMotor
       measuredVelocity = new YoDouble(prefix + "measuredVelocity", registry); // rad/sec
 
       measuredTorque = new YoDouble(prefix + "measuredTorque", registry);
+      filteredTorque = new AlphaFilteredYoVariable(prefix + "measuredTorqueFiltered", registry, 0.9, measuredTorque);
       velocityFilterCoefficient = new YoDouble(prefix + "velocityFilterCoefficient", registry);
 
       filteredVelocity = new FilteredVelocityYoVariable(prefix + "filteredVelocity", null, velocityFilterCoefficient, measuredActuatorPosition, dt, registry);

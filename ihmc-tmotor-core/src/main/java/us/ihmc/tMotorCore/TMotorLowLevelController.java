@@ -183,6 +183,11 @@ public class TMotorLowLevelController implements RobotController
       unsafeOutputSpeed = unsafeSpeed;
    }
 
+   public void setTorqueScale(double torqueScale)
+   {
+      tMotor.setTorqueScale(torqueScale);
+   }
+
    public void setDesiredPosition(double position)
    {
       desiredActuatorPosition.set(position);
