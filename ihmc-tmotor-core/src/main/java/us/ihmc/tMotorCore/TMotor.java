@@ -30,7 +30,8 @@ public class TMotor extends CANMotor
       motorReplyMsg = new TMotorCANReplyMessage(encoderParameters);
       velocityFilterCoefficient.set(0.9);
 
-      motorDirection.set(1);
+      // CHANGE ME based on the direction of the belt test stand
+      motorDirection.set(-1);
       parentRegistry.addChild(registry);
    }
 

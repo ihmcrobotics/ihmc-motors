@@ -37,7 +37,7 @@ tasks.create("deploy") {
    dependsOn("installDist")
 
    doLast {
-      remote.session("172.16.66.55", { sshClient -> sshClient.authPassword("root", "ShadyLady") }) //Note: Use 172.16.66.55 or 50 for ISA test beds. Use 100 for Electric actuator test beds. Later we should make this be a variable of sorts...
+      remote.session("172.16.66.49", { sshClient -> sshClient.authPassword("root", "ShadyLady") }) //Note: Use 172.16.66.55 or 50 for ISA test beds. Use 100 for Electric actuator test beds. Later we should make this be a variable of sorts...
       {
          put(file("build/install/${project.name}").toString(), "isa-testbed")
          exec("chmod +x isa-testbed/bin/TMotorKtTestBed")

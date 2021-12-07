@@ -17,6 +17,7 @@ import us.ihmc.realtime.MonotonicTime;
 import us.ihmc.realtime.PriorityParameters;
 import us.ihmc.robotDataLogger.YoVariableServer;
 import us.ihmc.robotDataLogger.logger.DataServerSettings;
+import us.ihmc.robotics.controllers.PIDController;
 import us.ihmc.robotics.math.filters.AlphaFilteredYoVariable;
 import us.ihmc.robotics.math.filters.ButterworthFilteredYoVariable;
 import us.ihmc.robotics.math.functionGenerator.YoFunctionGenerator;
@@ -31,6 +32,7 @@ import us.ihmc.yoVariables.variable.YoEnum;
 import us.ihmc.yoVariables.variable.YoInteger;
 import us.ihmc.yoVariables.variable.YoLong;
 
+
 import java.io.IOException;
 import java.util.List;
 
@@ -38,6 +40,8 @@ import static peak.can.basic.TPCANStatus.PCAN_ERROR_QRCVEMPTY;
 
 /**
  */
+
+
 public class TMotorKtTestBed extends EtherCATRealtimeThread
 {
    private static final boolean USE_DC = false;
@@ -73,17 +77,24 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
    private final YoEnum<Slave.State> ek1100State = new YoEnum<>("ek1100State", registry, Slave.State.class);
    private final YoEnum<Slave.State> el3104State = new YoEnum<>("el3104State", registry, Slave.State.class);
 
+   private final YoDouble beltActuatorOutput;
+
+   private final YoEnum<TestBedControlMode> testBedControlMode = new YoEnum<>("testBedControlMode", registry, TestBedControlMode.class);
+
    // CAN-related goodies
    private PCANBasic can = new PCANBasic();
-   private final TPCANHandle channel1 = TPCANHandle.PCAN_PCIBUS1;
-   private final TPCANHandle channel2 = TPCANHandle.PCAN_PCIBUS2;
+   private final TPCANHandle channel1 = TPCANHandle.PCAN_PCIBUS2;
+   private final TPCANHandle channel2 = TPCANHandle.PCAN_PCIBUS1;
    private final TPCANMsg receivedMsg = new TPCANMsg();
    private TPCANStatus status = null;
-   private static final int CAN_ID = 11; // 10; // 1; //  2; // 9; //
+   private static final int CAN_ID = 2; // 10; // 11; //  2; // 9; //
 
    private final YoAnalogSignalWrapper torqueSensorProcessor;
    private final ButterworthFilteredYoVariable filteredTorque;
    private final YoDouble alphaLoadcell = new YoDouble("alphaLoadcell", registry);
+
+
+
 
    public TMotorKtTestBed(String iface, MonotonicTime period, boolean enableDC, YoVariableServer yoVariableServer)
    {
@@ -100,9 +111,11 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
       yoEL3104 = new YoEL3104(analogInput, registry);
       tMotor = new TMotor(CAN_ID, "tMotor", TMotorVersion.AK109, DT, registry);
       motorController = new TMotorLowLevelController("tMotorController", tMotor, registry);
-      motorController.setUnsafeOutputSpeed(12.0);
+      //previous max = 12.0
+      motorController.setUnsafeOutputSpeed(20.0);
 
       functionGenerator = new YoFunctionGeneratorNew("functionGenerator", DT, registry);
+      beltActuatorOutput = new YoDouble("beltActuatorOutput",registry);
       
       receivedMsg.setLength((byte) 6);
 
@@ -149,7 +162,7 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
    private void motorRead()
    {
       TPCANStatus readStatus;
-      while((readStatus = can.Read(channel2, receivedMsg, null)) != PCAN_ERROR_QRCVEMPTY)
+      while((readStatus = can.Read(channel1, receivedMsg, null)) != PCAN_ERROR_QRCVEMPTY)
       {
          if (readStatus == TPCANStatus.PCAN_ERROR_OK)
          {
@@ -167,7 +180,7 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
    private void motorWrite()
    {
       TPCANMsg motorCommand = tMotor.getCommandedMsg();
-      status = can.Write(channel2, motorCommand);
+      status = can.Write(channel1, motorCommand);
       if (status != TPCANStatus.PCAN_ERROR_OK)
       {
          writeErrorCounter.increment();
@@ -193,11 +206,16 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
    private void setDesireds()
    {
       functionGenerator.update();
+
+      /*switch(testBedControlMode){
+         case TestBedControlMode.TORQUE
+      }*/
       double tau_d = functionGenerator.getValue();
 
       motorController.setDesiredPosition(0.0);
       motorController.setDesiredVelocity(0.0);
       motorController.setDesiredTorque(tau_d);
+      beltActuatorOutput.set(tau_d*2);
    }
 
    /**
@@ -277,7 +295,15 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
 
    public static void main(String[] args)
    {
-      String iface = args[0];
+      String iface;
+      try
+      {
+         iface = args[0];
+      }
+      catch(Exception e)
+      {
+         iface = "enp3s0";
+      }
       MonotonicTime period = new MonotonicTime(0, Conversions.secondsToNanoseconds(DT));
 
       YoVariableServer yoVariableServer = new YoVariableServer(TMotorKtTestBed.class, null, new DataServerSettings(true), period.asSeconds());
