@@ -1,6 +1,7 @@
 package us.ihmc.tMotorCore;
 
 import peak.can.basic.TPCANMsg;
+import us.ihmc.robotics.controllers.pidGains.implementations.YoPIDGains;
 import us.ihmc.simulationconstructionset.util.RobotController;
 import us.ihmc.robotics.controllers.PIDController;
 import us.ihmc.robotics.controllers.pidGains.YoPID3DGains;
@@ -45,6 +46,10 @@ public class TMotorLowLevelController implements RobotController
    private final PIDController externalPositionPIDController;
    private final PIDController externalVelocityPIDController;
    private final PIDController externalTorquePIDController;
+   private final YoPIDGains externalPositionGains;
+   private final YoPIDGains externalVelocityGains;
+   private final YoPIDGains externalTorqueGains;
+
    /*private final YoDouble controllerPositionKp;
    private final YoDouble controllerPositionKi;
    private final YoDouble controllerPositionKd;
@@ -82,16 +87,15 @@ public class TMotorLowLevelController implements RobotController
       torqueError = new YoDouble(name + "_torqueError", registry);
 
       motorControlMode = new YoEnum<>(name + "motorControlModeSelect", registry, MotorControlMode.class);
-      controllerPositionKp = new YoDouble(name + "_controllerPositionKp", registry);
-      controllerPositionKi = new YoDouble(name + "_controllerPositionKi", registry);
-      controllerPositionKd = new YoDouble(name + "_controllerPositionKd", registry);
-      controllerVelocityKp = new YoDouble(name + "_controllerVelocityKp", registry);
-      controllerVelocityKi = new YoDouble(name + "_controllerVelocityKi", registry);
-      controllerVelocityKd = new YoDouble(name + "_controllerVelocityKd", registry);
-      controllerTorqueKp = new YoDouble(name + "_controllerTorqueKp", registry);
-      controllerTorqueKi = new YoDouble(name + "_controllerTorqueKi", registry);
-      controllerTorqueKd = new YoDouble(name + "_controllerTorqueKd", registry);
-      externalPositionPIDController = new PIDController()
+      externalPositionGains = new YoPIDGains("_externalPositionController", registry);
+      externalVelocityGains = new YoPIDGains("_externalVelocityController", registry);
+      externalTorqueGains = new YoPIDGains("_externalTorqueController", registry);
+      externalPositionGains.setPIDGains(10,0,0,0);
+      externalVelocityGains.setPIDGains(10,0,0,0);
+      externalTorqueGains.setPIDGains(10,0,0,0);
+      externalPositionPIDController = new PIDController(externalPositionGains,"_externalPositionController",registry);
+      externalVelocityPIDController = new PIDController(externalVelocityGains,"_externalVelocityController",registry);
+      externalTorquePIDController = new PIDController(externalTorqueGains,"_externalTorqueController",registry);
 
       parentRegistry.addChild(registry);
    }
