@@ -26,6 +26,7 @@ import us.ihmc.tMotorCore.CANMessages.TMotorCANReplyMessage;
 import us.ihmc.tMotorCore.TMotor;
 import us.ihmc.tMotorCore.TMotorLowLevelController;
 import us.ihmc.tMotorCore.TMotorVersion;
+import us.ihmc.tMotorCore.MotorControlMode;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoEnum;
@@ -116,6 +117,7 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
 
       functionGenerator = new YoFunctionGeneratorNew("functionGenerator", DT, registry);
       beltActuatorOutput = new YoDouble("beltActuatorOutput",registry);
+      testBedControlMode.set(TestBedControlMode.MOTOR_TORQUE);
       
       receivedMsg.setLength((byte) 6);
 
@@ -210,12 +212,57 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
       /*switch(testBedControlMode){
          case TestBedControlMode.TORQUE
       }*/
-      double tau_d = functionGenerator.getValue();
+      double tau_d;
+      double tauDot;
+      double q_d;
+      double qDot;
+      //System.out.println(testBedControlMode.getEnumValue());
+      switch(testBedControlMode.getEnumValue()){
+         case MOTOR_TORQUE:
+            tau_d = functionGenerator.getValue();
+            tauDot = functionGenerator.getValueDot();
+            motorController.setMotorControlMode(MotorControlMode.INTERNAL_MOTOR_CONTROLLER);
+            motorController.setDesiredPosition(0.0);
+            motorController.setDesiredVelocity(0.0);
+            motorController.setDesiredTorque(tau_d);
+            beltActuatorOutput.set(tau_d*2);
+            break;
+         case MOTOR_POSITION:
+            q_d = functionGenerator.getValue();
+            qDot = functionGenerator.getValueDot();
+            motorController.setMotorControlMode(MotorControlMode.INTERNAL_MOTOR_CONTROLLER);
+            motorController.setDesiredPosition(q_d);
+            motorController.setDesiredVelocity(qDot);
+            motorController.setDesiredTorque(0);
+            motorController.setDesiredTorqueRate(0);
+            beltActuatorOutput.set(motorController.getMotorTorque()*2); //unsure if this will be accurate
+            break;
+         case SENSED_TORQUE:
+            tau_d = functionGenerator.getValue();
+            tauDot = functionGenerator.getValueDot();
+            motorController.setMotorControlMode(MotorControlMode.EXTERNAL_TORQUE_CONTROLLER);
+            motorController.setDesiredPosition(0.0);
+            motorController.setDesiredVelocity(0.0);
+            motorController.setDesiredTorque(tau_d);
+            motorController.setDesiredTorqueRate(tauDot);
+            beltActuatorOutput.set(tau_d*2);
+            break;
+         case SENSED_POSITION:
+            q_d = functionGenerator.getValue();
+            qDot = functionGenerator.getValueDot();
+            motorController.setMotorControlMode(MotorControlMode.EXTERNAL_PID_CONTROLLER);
+            motorController.setDesiredPosition(q_d);
+            motorController.setDesiredVelocity(qDot);
+            motorController.setDesiredTorque(0);
+            motorController.setDesiredTorqueRate(0);
+            beltActuatorOutput.set(motorController.getCommandedTorque()*2);
+            break;
+         default:
+            throw new RuntimeException("Illegal TestBed Control Mode");
 
-      motorController.setDesiredPosition(0.0);
-      motorController.setDesiredVelocity(0.0);
-      motorController.setDesiredTorque(tau_d);
-      beltActuatorOutput.set(tau_d*2);
+
+      }
+
    }
 
    /**
@@ -258,6 +305,10 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
       yoEL3104.read();
       motorRead();
       filteredTorque.update();
+      //feed the torque sensor back to the motor controller
+      motorController.updateMeasuredForce(filteredTorque.getDoubleValue());
+      motorController.updateMeasuredPosition(motorController.getMotorPosition()); //cause we don't have an external encoder
+      motorController.updateMeasuredVelocity(motorController.getMotorVelocity()); //cause we don't have an external encoder
 
       torqueSensorProcessor.update();
       setDesireds();
