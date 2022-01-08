@@ -16,8 +16,8 @@ public class TMotor extends CANMotor
    /**
     * The T-Motor firmware uses at Kt=0.095 Nm/A, but this is under-approximated. This multiplier can be used to adjust to the actual Kt.
     *
-    * Desired torques will be scaled by this value before being sent to the motor controller, and the motor controller's reported torque
-    * will be scaled down by this value.
+    * Desired torques will be scaled down by this value before being sent to the motor controller and the motor controller's reported torque
+    * will be scaled up by this value.
     */
    private double torqueScale = 1.0;
 
@@ -28,7 +28,7 @@ public class TMotor extends CANMotor
       TMotorParameters encoderParameters = version.getMotorParameters();
       motorReceiveMsg =  new TMotorCANReceiveMessage(ID, encoderParameters);
       motorReplyMsg = new TMotorCANReplyMessage(encoderParameters);
-      velocityFilterCoefficient.set(0.9);
+      velocityFilterCoefficient.set(0.95);
 
       motorDirection.set(1);
       parentRegistry.addChild(registry);
@@ -43,7 +43,7 @@ public class TMotor extends CANMotor
       measuredEncoderPosition.set(motorReplyMsg.getMeasuredEncoderPosition());
       measuredActuatorPosition.set(motorDirection.getValue() * motorReplyMsg.getMeasuredPosition());
       measuredVelocity.set(motorDirection.getValue() * motorReplyMsg.getMeasuredVelocity());
-      measuredTorque.set(motorDirection.getValue() * motorReplyMsg.getMeasuredTorque() / torqueScale);
+      measuredTorque.set(motorDirection.getValue() * motorReplyMsg.getMeasuredTorque() * torqueScale);
       filteredVelocity.update();
       filteredTorque.update();
    }
@@ -57,7 +57,7 @@ public class TMotor extends CANMotor
    {
       motorReceiveMsg.parseAndPackControlMsg((float) motorDirection.getValue() * desiredPosition,
                                              (float) motorDirection.getValue() * desiredVelocity,
-                                             (float) (motorDirection.getValue() * desiredTorque * torqueScale),
+                                             (float) (motorDirection.getValue() * desiredTorque / torqueScale),
                                              kp,
                                              kd);
    }
