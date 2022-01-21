@@ -9,7 +9,7 @@ ihmc {
    loadProductProperties("../product.properties")
 
    configureDependencyResolution()
-   repository("https://artifactory.ihmc.us/artifactory/proprietary-releases/")//, artifactoryUsername, artifactoryPassword)
+   repository("https://nexus.ihmc.us/repository/proprietary-releases/")
    configurePublications()
 }
 

@@ -5,14 +5,14 @@ plugins {
    id("us.ihmc.log-tools-plugin") version "0.6.3"
 }
 
-val artifactoryUsername: String by project
-val artifactoryPassword: String by project
+val nexusUsername: String by project
+val nexusPassword: String by project
 
 ihmc {
    loadProductProperties("../product.properties")
 
    configureDependencyResolution()
-   repository("https://artifactory.ihmc.us/artifactory/proprietary-releases/", artifactoryUsername, artifactoryPassword)
+   repository("https://nexus.ihmc.us/repository/proprietary-releases/", nexusUsername, nexusPassword)
    configurePublications()
 }
 
