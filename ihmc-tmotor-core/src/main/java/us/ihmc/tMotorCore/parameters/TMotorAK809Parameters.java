@@ -12,15 +12,6 @@ public class TMotorAK809Parameters implements TMotorParameters
     private final static float MAXIMUM_KP = 500;
     private final static float MAXIMUM_KD = 100;
 
-    private final static float TORQUE_RATIO = 0.46f;
-
-    private final static int GEAR_RATIO_TO_ONE = 9;
-
-    public TMotorAK809Parameters()
-    {
-
-    }
-
     public float getMinimumEncoderPosition()
     {
         return MIN_POSITION;
@@ -62,8 +53,8 @@ public class TMotorAK809Parameters implements TMotorParameters
     }
 
     @Override
-    public float getTorqueRatio()
+    public double getGearRatio()
     {
-        return TORQUE_RATIO;
+        return 9.0;
     }
 }

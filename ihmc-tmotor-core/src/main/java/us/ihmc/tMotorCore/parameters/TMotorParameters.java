@@ -14,8 +14,5 @@ public interface TMotorParameters
     float getMaximumKp();
     float getMaximumKd();
 
-    /**
-     * The ratio of the actual over the commanded torque.
-     */
-    float getTorqueRatio();
+    double getGearRatio();
 }
