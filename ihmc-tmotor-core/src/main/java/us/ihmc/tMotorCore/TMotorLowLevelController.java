@@ -11,7 +11,7 @@ public class TMotorLowLevelController implements RobotController
 {
    private final YoRegistry registry;
 
-   private double unsafeOutputSpeed;
+   private final YoDouble unsafeOutputSpeed;
 
    private final YoDouble desiredActuatorPosition;
    private final YoDouble desiredActuatorVelocity;
@@ -45,6 +45,7 @@ public class TMotorLowLevelController implements RobotController
       desiredActuatorPosition = new YoDouble(name + "_desiredActuatorPosition", registry);
       desiredActuatorVelocity = new YoDouble(name + "_desiredActuatorVelocity", registry);
       desiredActuatorTorque = new YoDouble(name + "_desiredActuatorTorque", registry);
+      unsafeOutputSpeed = new YoDouble(name + "_unsafeOutputSpeed", registry);
 
       sendEnableMotorCommand = new YoBoolean(name + "_sendEnableMotorCommand", registry);
       sendDisableMotorCommand = new YoBoolean(name + "_sendDisableMotorCommand", registry);
@@ -128,7 +129,7 @@ public class TMotorLowLevelController implements RobotController
 
    private boolean motorIsInUnsafeState()
    {
-      if (Math.abs(tMotor.getVelocity()) > unsafeOutputSpeed)
+      if (Math.abs(tMotor.getVelocity()) > unsafeOutputSpeed.getDoubleValue())
          return true;
 
       return false;
@@ -180,7 +181,7 @@ public class TMotorLowLevelController implements RobotController
 
    public void setUnsafeOutputSpeed(double unsafeSpeed)
    {
-      unsafeOutputSpeed = unsafeSpeed;
+      unsafeOutputSpeed.set(unsafeSpeed);
    }
 
    public void setTorqueScale(double torqueScale)
