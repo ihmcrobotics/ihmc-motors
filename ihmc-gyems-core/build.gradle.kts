@@ -5,11 +5,14 @@ plugins {
    id("us.ihmc.log-tools-plugin") version "0.6.3"
 }
 
+val nexusUsername: String by project
+val nexusPassword: String by project
+
 ihmc {
    loadProductProperties("../product.properties")
 
    configureDependencyResolution()
-   repository("https://nexus.ihmc.us/repository/proprietary-releases/")
+   repository("https://nexus.ihmc.us/repository/proprietary-releases/", nexusUsername, nexusPassword)
    configurePublications()
 }
 
