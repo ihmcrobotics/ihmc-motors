@@ -139,4 +139,9 @@ public class TMotor extends CANMotor
    {
       this.torqueScale = torqueScaling;
    }
+
+   public void setOffsetInterval(int offsetInterval)
+   {
+      this.offsetInterval.set(offsetInterval);
+   }
 }
