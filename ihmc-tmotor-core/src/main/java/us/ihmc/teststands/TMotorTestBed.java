@@ -1,13 +1,26 @@
 package us.ihmc.teststands;
 
+import static peak.can.basic.TPCANStatus.PCAN_ERROR_QRCVEMPTY;
+
+import java.util.HashMap;
+
 import gnu.trove.map.hash.TIntObjectHashMap;
-import peak.can.basic.*;
+import peak.can.basic.PCANBasic;
+import peak.can.basic.TPCANBaudrate;
+import peak.can.basic.TPCANHandle;
+import peak.can.basic.TPCANMsg;
+import peak.can.basic.TPCANStatus;
+import peak.can.basic.TPCANType;
+import us.ihmc.CAN.CANTools;
 import us.ihmc.commons.Conversions;
-import us.ihmc.realtime.*;
+import us.ihmc.realtime.CPUDMALatency;
+import us.ihmc.realtime.MonotonicTime;
+import us.ihmc.realtime.PeriodicParameters;
+import us.ihmc.realtime.PriorityParameters;
+import us.ihmc.realtime.RealtimeThread;
 import us.ihmc.robotDataLogger.YoVariableServer;
 import us.ihmc.robotDataLogger.logger.DataServerSettings;
 import us.ihmc.robotics.math.functionGenerator.YoFunctionGenerator;
-import us.ihmc.tMotorCore.CANMessages.TMotorCANReplyMessage;
 import us.ihmc.tMotorCore.TMotor;
 import us.ihmc.tMotorCore.TMotorLowLevelController;
 import us.ihmc.tMotorCore.TMotorVersion;
@@ -16,10 +29,6 @@ import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoInteger;
 import us.ihmc.yoVariables.variable.YoLong;
-
-import java.util.HashMap;
-
-import static peak.can.basic.TPCANStatus.PCAN_ERROR_QRCVEMPTY;
 
 public class TMotorTestBed extends RealtimeThread
 {
@@ -160,7 +169,7 @@ public class TMotorTestBed extends RealtimeThread
       {
          if (readStatus == TPCANStatus.PCAN_ERROR_OK)
          {
-            int id = TMotorCANReplyMessage.getID(receivedMsg);
+            int id = CANTools.getID(receivedMsg);
             if(motors.containsKey(id))
                motors.get(id).read(receivedMsg);
             messagesInReadBus.increment();

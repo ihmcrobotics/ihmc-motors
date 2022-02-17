@@ -12,32 +12,32 @@ public class TMotorAK109Parameters implements TMotorParameters
    private final static float MAXIMUM_KP = 500;
    private final static float MAXIMUM_KD = 100;
 
-   public float getMinimumEncoderPosition()
+   public float getPositionLimitLower()
    {
       return MIN_POSITION;
    }
 
-   public float getMaximumEncoderPosition()
+   public float getPositionLimitUpper()
    {
       return MAX_POSITION;
    }
 
-   public float getMinimumEncoderVelocity()
+   public float getVelocityLimitLower()
    {
       return MIN_VELOCITY;
    }
 
-   public float getMaximumEncoderVelocity()
+   public float getVelocityLimitUpper()
    {
       return MAX_VELOCITY;
    }
 
-   public float getMinimumTorqueReading()
+   public float getTorqueLimitLower()
    {
       return MIN_TORQUE;
    }
 
-   public float getMaximumTorqueReading()
+   public float getTorqueLimitUpper()
    {
       return MAX_TORQUE;
    }

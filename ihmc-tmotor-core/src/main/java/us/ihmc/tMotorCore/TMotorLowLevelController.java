@@ -1,41 +1,29 @@
 package us.ihmc.tMotorCore;
 
 import peak.can.basic.TPCANMsg;
-import us.ihmc.simulationconstructionset.util.RobotController;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
-import us.ihmc.yoVariables.variable.YoInteger;
 
-public class TMotorLowLevelController implements RobotController
+public class TMotorLowLevelController
 {
    private final YoRegistry registry;
 
    private final YoDouble unsafeOutputSpeed;
 
-   private final YoDouble desiredActuatorPosition;
-   private final YoDouble desiredActuatorVelocity;
-   private final YoDouble desiredActuatorTorque;
-
    private final TMotor tMotor;
-   private double pulleyRadius = 0;
-
-   private final YoDouble controllerPositionKp;
-   private final YoDouble controllerTorqueKp;
-   private final YoDouble measuredPosition;
-   private final YoDouble measuredForce;
-
    private final YoBoolean sendEnableMotorCommand;
    private final YoBoolean sendDisableMotorCommand;
    private final YoBoolean sendZeroMotorCommand;
 
-   // gains
-   private final YoInteger motorPositionKp;
-   private final YoInteger motorVelocityKd;
-   private final YoDouble motorTorqueKp;
+   //desireds
+   private final YoDouble desiredActuatorPosition;
+   private final YoDouble desiredActuatorVelocity;
+   private final YoDouble desiredActuatorTorque;
 
-   private final YoDouble positionError;
-   private final YoDouble torqueError;
+   // gains
+   private final YoDouble motorPositionKp;
+   private final YoDouble motorVelocityKd;
 
    public TMotorLowLevelController(String name, TMotor tMotor, YoRegistry parentRegistry)
    {
@@ -51,100 +39,10 @@ public class TMotorLowLevelController implements RobotController
       sendDisableMotorCommand = new YoBoolean(name + "_sendDisableMotorCommand", registry);
       sendZeroMotorCommand = new YoBoolean(name + "_sendZeroMotorCommand", registry);
 
-      measuredPosition = new YoDouble(name + "_measuredPosition", registry);
-      measuredForce = new YoDouble(name + "_measuredForce", registry);
-
-      motorPositionKp = new YoInteger(name + "_motorPositionKp", registry);
-      motorVelocityKd = new YoInteger(name + "_motorVelocityKd", registry);
-      motorTorqueKp = new YoDouble(name + "_motorTorqueKp", registry);
-      controllerPositionKp = new YoDouble(name + "_controllerPositionKp", registry);
-      controllerTorqueKp = new YoDouble(name + "_controllerTorqueKp", registry);
-
-      positionError = new YoDouble(name + "_positionError", registry);
-      torqueError = new YoDouble(name + "_torqueError", registry);
+      motorPositionKp = new YoDouble(name + "_motorPositionKp", registry);
+      motorVelocityKd = new YoDouble(name + "_motorVelocityKd", registry);
 
       parentRegistry.addChild(registry);
-   }
-
-   /**
-    * Computes command to send to T-Motor
-    */
-   @Override
-   public void doControl()
-   {
-      if (isUserSendingPredefinedCommand() || isMotorInUnsafeState())
-         return;
-
-      float desiredPosition = (float) desiredActuatorPosition.getDoubleValue();
-      float desiredVelocity = (float) desiredActuatorVelocity.getDoubleValue();
-      float desiredTorque = (float) desiredActuatorTorque.getDoubleValue();
-
-      // TODO: why is this +=? and why is desired position changing with position error?
-//      desiredPosition += controllerPositionKp.getDoubleValue() * getPositionError();
-//      desiredTorque += controllerTorqueKp.getDoubleValue() * getTorqueError();
-
-      tMotor.parseAndPack(getKp(), getKd(), desiredPosition, desiredVelocity, desiredTorque);
-      tMotor.getYoCANMsg().setSent(tMotor.getControlMotorMsg().getData());
-      tMotor.setCommandedMsg(tMotor.getControlMotorMsg());
-   }
-
-   private boolean isUserSendingPredefinedCommand()
-   {
-      if (sendEnableMotorCommand.getBooleanValue())
-      {
-         tMotor.setCommandedMsg(tMotor.getEnableMotorMsg());
-         tMotor.getYoCANMsg().setSent(tMotor.getEnableMotorMsg().getData());
-         sendEnableMotorCommand.set(false);
-         return true;
-      }
-
-      if (sendDisableMotorCommand.getBooleanValue())
-      {
-         tMotor.setCommandedMsg(tMotor.getDisableMotorMsg());
-         tMotor.getYoCANMsg().setSent(tMotor.getDisableMotorMsg().getData());
-         sendDisableMotorCommand.set(false);
-         return true;
-      }
-
-      if (sendZeroMotorCommand.getBooleanValue())
-      {
-         tMotor.setCommandedMsg(tMotor.getZeroMotorMsg());
-         tMotor.getYoCANMsg().setSent(tMotor.getZeroMotorMsg().getData());
-         sendZeroMotorCommand.set(false);
-         return true;
-      }
-      return false;
-   }
-
-   private boolean isMotorInUnsafeState()
-   {
-      if (motorIsInUnsafeState())
-      {
-         tMotor.setCommandedMsg(tMotor.getDisableMotorMsg());
-         tMotor.getYoCANMsg().setSent(tMotor.getDisableMotorMsg().getData());
-         return true;
-      }
-      return false;
-   }
-
-   private boolean motorIsInUnsafeState()
-   {
-      if (Math.abs(tMotor.getVelocity()) > unsafeOutputSpeed.getDoubleValue())
-         return true;
-
-      return false;
-   }
-
-   @Override
-   public void initialize()
-   {
-
-   }
-
-   @Override
-   public YoRegistry getYoRegistry()
-   {
-      return registry;
    }
 
    public void read(TPCANMsg receivedMsg)
@@ -152,31 +50,36 @@ public class TMotorLowLevelController implements RobotController
       tMotor.read(receivedMsg);
    }
 
-   public void update()
+   public void doControl()
    {
-      tMotor.update();
-   }
+      if (sendDisableMotorCommand.getBooleanValue())
+      {
+         tMotor.setCommandToDisableMotor();
+         sendDisableMotorCommand.set(false);
+         return;
+      }
+      
+      if (sendEnableMotorCommand.getBooleanValue())
+      {
+         tMotor.setCommandToEnableMotor();
+         sendEnableMotorCommand.set(false);
+         return;
+      }
 
-   public void updateMeasuredForce(double measuredForce)
-   {
-      this.measuredForce.set(measuredForce);
-   }
+      if (sendZeroMotorCommand.getBooleanValue())
+      {
+         tMotor.setCommandToZeroEncoder();
+         sendZeroMotorCommand.set(false);
+         return;
+      }
 
-   public void updateMeasuredPosition(double measuredPosition)
-   {
-      this.measuredPosition.set(measuredPosition);
-   }
+      double desiredPosition = desiredActuatorPosition.getDoubleValue();
+      double desiredVelocity = desiredActuatorVelocity.getDoubleValue();
+      double desiredTorque = desiredActuatorTorque.getDoubleValue();
+      double kp = motorPositionKp.getDoubleValue();
+      double kd = motorVelocityKd.getDoubleValue();
 
-   public double getPositionError()
-   {
-      positionError.set(desiredActuatorPosition.getDoubleValue() - measuredPosition.getDoubleValue());
-      return positionError.getDoubleValue();
-   }
-
-   public double getTorqueError()
-   {
-      torqueError.set(desiredActuatorTorque.getDoubleValue() - (measuredForce.getDoubleValue() * pulleyRadius));
-      return torqueError.getDoubleValue();
+      tMotor.setCommand(kp, kd, desiredPosition, desiredVelocity, desiredTorque);
    }
 
    public void setUnsafeOutputSpeed(double unsafeSpeed)
@@ -206,57 +109,27 @@ public class TMotorLowLevelController implements RobotController
 
    public void setKp(double kp)
    {
-      motorPositionKp.set((int) kp);
+      motorPositionKp.set(kp);
    }
 
    public void setKd(double kd)
    {
-      motorVelocityKd.set((int) kd);
+      motorVelocityKd.set(kd);
    }
 
-   public TMotor getMotor()
-   {
-      return this.tMotor;
-   }
-
-   public void setPulleyRadius(double pulleyRadius)
-   {
-      this.pulleyRadius = pulleyRadius;
-   }
-
-   public double getMeasuredAppliedTorque()
-   {
-      return tMotor.getTorque();
-   }
-
-   public double getMotorPosition()
+   public double getMeasuredPosition()
    {
       return tMotor.getPosition();
    }
 
-   public double getMotorVelocity()
+   public double getMeasuredVelocity()
    {
       return tMotor.getVelocity();
    }
 
-   public double getMotorTorque()
+   public double getMeasuredTorque()
    {
       return tMotor.getTorque();
-   }
-
-   public int getKp()
-   {
-      return motorPositionKp.getIntegerValue();
-   }
-
-   public int getKd()
-   {
-      return motorVelocityKd.getIntegerValue();
-   }
-
-   public double getTorqueKp()
-   {
-      return this.motorTorqueKp.getDoubleValue();
    }
 
    public void sendEnableMotorCommand()

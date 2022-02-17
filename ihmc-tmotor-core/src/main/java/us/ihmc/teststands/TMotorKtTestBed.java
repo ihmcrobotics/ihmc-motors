@@ -1,6 +1,17 @@
 package us.ihmc.teststands;
 
-import peak.can.basic.*;
+import static peak.can.basic.TPCANStatus.PCAN_ERROR_QRCVEMPTY;
+
+import java.io.IOException;
+import java.util.List;
+
+import peak.can.basic.PCANBasic;
+import peak.can.basic.TPCANBaudrate;
+import peak.can.basic.TPCANHandle;
+import peak.can.basic.TPCANMsg;
+import peak.can.basic.TPCANStatus;
+import peak.can.basic.TPCANType;
+import us.ihmc.CAN.CANTools;
 import us.ihmc.commons.Conversions;
 import us.ihmc.etherCAT.master.EtherCATRealtimeThread;
 import us.ihmc.etherCAT.master.Slave;
@@ -19,9 +30,7 @@ import us.ihmc.robotDataLogger.YoVariableServer;
 import us.ihmc.robotDataLogger.logger.DataServerSettings;
 import us.ihmc.robotics.math.filters.AlphaFilteredYoVariable;
 import us.ihmc.robotics.math.filters.ButterworthFilteredYoVariable;
-import us.ihmc.robotics.math.functionGenerator.YoFunctionGenerator;
 import us.ihmc.robotics.math.functionGenerator.YoFunctionGeneratorNew;
-import us.ihmc.tMotorCore.CANMessages.TMotorCANReplyMessage;
 import us.ihmc.tMotorCore.TMotor;
 import us.ihmc.tMotorCore.TMotorLowLevelController;
 import us.ihmc.tMotorCore.TMotorVersion;
@@ -30,11 +39,6 @@ import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoEnum;
 import us.ihmc.yoVariables.variable.YoInteger;
 import us.ihmc.yoVariables.variable.YoLong;
-
-import java.io.IOException;
-import java.util.List;
-
-import static peak.can.basic.TPCANStatus.PCAN_ERROR_QRCVEMPTY;
 
 /**
  */
@@ -153,7 +157,7 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
       {
          if (readStatus == TPCANStatus.PCAN_ERROR_OK)
          {
-            int id = TMotorCANReplyMessage.getID(receivedMsg);
+            int id = CANTools.getID(receivedMsg);
             if(id == CAN_ID)
                motorController.read(receivedMsg);
          }

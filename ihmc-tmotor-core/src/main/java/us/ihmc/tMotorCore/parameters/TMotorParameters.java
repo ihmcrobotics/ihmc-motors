@@ -2,14 +2,14 @@ package us.ihmc.tMotorCore.parameters;
 
 public interface TMotorParameters
 {
-    float getMinimumEncoderPosition();
-    float getMaximumEncoderPosition();
+    float getPositionLimitLower();
+    float getPositionLimitUpper();
 
-    float getMinimumEncoderVelocity();
-    float getMaximumEncoderVelocity();
+    float getVelocityLimitLower();
+    float getVelocityLimitUpper();
 
-    float getMinimumTorqueReading();
-    float getMaximumTorqueReading();
+    float getTorqueLimitLower();
+    float getTorqueLimitUpper();
 
     float getMaximumKp();
     float getMaximumKd();
