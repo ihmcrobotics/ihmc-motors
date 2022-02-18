@@ -149,7 +149,7 @@ public class TMotor
       coolingGain = new YoDouble(prefix + "coolingGain", registry);
       heatingTerm = new YoDouble(prefix + "heatingTerm", registry);
       coolingTerm = new YoDouble(prefix + "coolingTerm", registry);
-      thermalMass = new YoDouble(prefix + "coolingTerm", registry);
+      thermalMass = new YoDouble(prefix + "thermalMass", registry);
 
       ambientTemp.set(25.0);
       estimatedTemp.set(25.0);
@@ -183,7 +183,7 @@ public class TMotor
       measuredTorqueFiltered.update();
 
       double deltaFromAmbient = estimatedTemp.getDoubleValue() - ambientTemp.getDoubleValue();
-      double i2r = measuredCurrent.getDoubleValue() * resistance.getDoubleValue() * resistance.getDoubleValue();
+      double i2r = measuredCurrent.getDoubleValue() * measuredCurrent.getDoubleValue() * resistance.getDoubleValue();
       heatingTerm.set(i2r * (1.0 + heatingGain.getDoubleValue() * deltaFromAmbient));
       coolingTerm.set(coolingGain.getDoubleValue() * deltaFromAmbient);
 
