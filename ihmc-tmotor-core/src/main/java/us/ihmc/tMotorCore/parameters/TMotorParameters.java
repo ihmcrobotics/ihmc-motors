@@ -2,17 +2,29 @@ package us.ihmc.tMotorCore.parameters;
 
 public interface TMotorParameters
 {
-    float getPositionLimitLower();
-    float getPositionLimitUpper();
+   double getPositionLimitLower();
 
-    float getVelocityLimitLower();
-    float getVelocityLimitUpper();
+   double getPositionLimitUpper();
 
-    float getTorqueLimitLower();
-    float getTorqueLimitUpper();
+   double getVelocityLimitLower();
 
-    float getMaximumKp();
-    float getMaximumKd();
+   double getVelocityLimitUpper();
 
-    double getGearRatio();
+   double getTorqueLimitLower();
+
+   double getTorqueLimitUpper();
+
+   double getMaximumKp();
+
+   double getMaximumKd();
+
+   double getGearRatio();
+
+   double getMotorResistance();
+
+   double getHeatingCoefficient();
+
+   double getCoolingCoefficient();
+
+   double getKt();
 }
