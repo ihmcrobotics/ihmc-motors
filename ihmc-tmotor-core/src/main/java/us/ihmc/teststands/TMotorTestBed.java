@@ -61,7 +61,7 @@ public class TMotorTestBed extends RealtimeThread
 
    // CAN-related goodies
    private PCANBasic can = new PCANBasic();
-   private final TPCANHandle channel = TPCANHandle.PCAN_PCIBUS1;
+   private final TPCANHandle channel = TPCANHandle.PCAN_PCIBUS2;
    private final TPCANMsg receivedMsg = new TPCANMsg();
    private TPCANStatus status = null;
 
@@ -91,11 +91,11 @@ public class TMotorTestBed extends RealtimeThread
       functionGenerator = new YoFunctionGenerator("functionGenerator", yoTime, registry);
       functionGenerator.setAlphaForSmoothing(0.99);
 
-      TMotor kneeMotor = new TMotor(KNEE_CAN_ID, "kneeMotor", TMotorVersion.AK109, DT, registry);
-      motors.put(kneeMotor.getID(), kneeMotor);
-      TMotorLowLevelController kneeController = new TMotorLowLevelController("kneeController", kneeMotor, registry);
-      kneeController.setUnsafeOutputSpeed(16.0);
-      motorControllers.put(kneeMotor, kneeController);
+//      TMotor kneeMotor = new TMotor(KNEE_CAN_ID, "kneeMotor", TMotorVersion.AK109, DT, registry);
+//      motors.put(kneeMotor.getID(), kneeMotor);
+//      TMotorLowLevelController kneeController = new TMotorLowLevelController("kneeController", kneeMotor, registry);
+//      kneeController.setUnsafeOutputSpeed(16.0);
+//      motorControllers.put(kneeMotor, kneeController);
 
       motorIDs = motors.keys();
 
@@ -188,7 +188,7 @@ public class TMotorTestBed extends RealtimeThread
       {
          motorControllers.get(motors.get(motorIDs[id])).setDesiredPosition(functionGenerator.getValue());
          motorControllers.get(motors.get(motorIDs[id])).setDesiredVelocity(functionGenerator.getValueDot());
-         motorControllers.get(motors.get(motorIDs[id])).setDesiredTorque(0.0);
+//         motorControllers.get(motors.get(motorIDs[id])).setDesiredTorque(0.0);
 
          motorControllers.get(motors.get(motorIDs[id])).doControl();
       }

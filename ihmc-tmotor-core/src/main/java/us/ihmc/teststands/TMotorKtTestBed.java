@@ -16,8 +16,11 @@ import us.ihmc.commons.Conversions;
 import us.ihmc.etherCAT.master.EtherCATRealtimeThread;
 import us.ihmc.etherCAT.master.Slave;
 import us.ihmc.etherCAT.slaves.beckhoff.EK1100;
+import us.ihmc.etherCAT.slaves.beckhoff.EL3062;
 import us.ihmc.etherCAT.slaves.beckhoff.EL3104;
+import us.ihmc.etherCAT.slaves.beckhoff.EL9510;
 import us.ihmc.etherCAT.slaves.beckhoff.YoAnalogSignalWrapper;
+import us.ihmc.etherCAT.slaves.beckhoff.YoEL3062;
 import us.ihmc.etherCAT.slaves.beckhoff.YoEL3104;
 import us.ihmc.log.LogTools;
 import us.ihmc.process.LinuxProcess;
@@ -68,9 +71,9 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
    private final YoLong readErrorCounter = new YoLong("readErrorCounter", registry);
    private final YoLong writeErrorCounter = new YoLong("writeErrorCounter", registry);
 
-   private final EK1100 ek1100;
-   private final EL3104 analogInput;
+   
    private final YoEL3104 yoEL3104;
+   private final YoEL3062 yoEL3062;
    private final TMotor tMotor;
    private final TMotorLowLevelController motorController;
    private final YoFunctionGeneratorNew functionGenerator;
@@ -83,11 +86,12 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
    private final TPCANHandle channel2 = TPCANHandle.PCAN_PCIBUS2;
    private final TPCANMsg receivedMsg = new TPCANMsg();
    private TPCANStatus status = null;
-   private static final int CAN_ID = 11; // 10; // 1; //  2; // 9; //
+   private static final int CAN_ID = 2; // 10; // 1; //  2; // 9; //
 
    private final YoAnalogSignalWrapper torqueSensorProcessor;
    private final ButterworthFilteredYoVariable filteredTorque;
    private final YoDouble alphaLoadcell = new YoDouble("alphaLoadcell", registry);
+   private YoAnalogSignalWrapper tempSensorProcessor;
 
    public TMotorKtTestBed(String iface, MonotonicTime period, boolean enableDC, YoVariableServer yoVariableServer)
    {
@@ -99,9 +103,16 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
       this.yoVariableServer = yoVariableServer;
       yoVariableServer.setMainRegistry(registry, null);
 
-      ek1100 = new EK1100(0, 0);
-      analogInput = new EL3104(0, 1);
+      EK1100 ek1100 = new EK1100(0, 0);
+      
+      EL3104 analogInput = new EL3104(0, 1);
       yoEL3104 = new YoEL3104(analogInput, registry);
+      
+      EL3062 el3062 = new EL3062(0, 2);
+      yoEL3062 = new YoEL3062(el3062, registry);
+      
+      EL9510 el9510 = new EL9510(0, 3);
+      
       tMotor = new TMotor(CAN_ID, "tMotor", TMotorVersion.AK109, DT, registry);
       motorController = new TMotorLowLevelController("tMotorController", tMotor, registry);
       motorController.setUnsafeOutputSpeed(12.0);
@@ -120,6 +131,13 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
       torqueSensorProcessor.setCoeffs(2.0, 200.0 / 5.0, 0.0); // .setCoeffs(-7.0, 1140.0, 0.0); //
       registerSlave(ek1100);
       registerSlave(analogInput);
+      registerSlave(el3062);
+      registerSlave(el9510);
+      
+      tempSensorProcessor = new YoAnalogSignalWrapper("motorTemp", yoEL3062, 0, registry);
+      tempSensorProcessor.setCoeffs(5.5537, 1.6913, 1.1642);
+      
+      
       setRequireAllSlaves(false);
 
       filteredTorque = new ButterworthFilteredYoVariable("filteredTorque",
@@ -141,8 +159,8 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
          System.out.println("CAN API has been initialized");
       }
 
-      status = can.Initialize(channel1, TPCANBaudrate.PCAN_BAUD_1M, TPCANType.PCAN_TYPE_NONE, 0, (short) 0);
-      LogTools.info("channel 1 " + channel1.getValue() + " initialized. Status: " + status);
+//      status = can.Initialize(channel1, TPCANBaudrate.PCAN_BAUD_1M, TPCANType.PCAN_TYPE_NONE, 0, (short) 0);
+//      LogTools.info("channel 1 " + channel1.getValue() + " initialized. Status: " + status);
 
       status = can.Initialize(channel2, TPCANBaudrate.PCAN_BAUD_1M, TPCANType.PCAN_TYPE_NONE, 0, (short) 0);
       LogTools.info("channel 2 " + channel2.getValue() + " initialized. Status: " + status);
@@ -242,10 +260,13 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
       controllerTimeInSeconds.set(Conversions.nanosecondsToSeconds(getCurrentCycleTimestamp() - getInitTimestamp()));
 
       yoEL3104.read();
+      yoEL3062.read();
+      
       motorRead();
       filteredTorque.update();
 
       torqueSensorProcessor.update();
+      tempSensorProcessor.update();
       setDesireds();
       motorController.doControl();
 
