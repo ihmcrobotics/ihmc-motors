@@ -70,7 +70,7 @@ public class TMotorAK109Parameters implements TMotorParameters
    @Override
    public double getHeatingCoefficient()
    {
-      return 0.00393;
+      return 0.0135;
    }
 
    /**
@@ -79,7 +79,7 @@ public class TMotorAK109Parameters implements TMotorParameters
    @Override
    public double getCoolingCoefficient()
    {
-      return 1.0;
+      return 0.0034;
    }
 
    @Override

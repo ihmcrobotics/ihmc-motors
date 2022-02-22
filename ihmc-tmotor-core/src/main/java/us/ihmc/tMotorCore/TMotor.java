@@ -2,6 +2,7 @@ package us.ihmc.tMotorCore;
 
 import peak.can.basic.TPCANMsg;
 import us.ihmc.CAN.YoCANMsg;
+import us.ihmc.commons.MathTools;
 import us.ihmc.robotics.math.filters.AlphaFilteredYoVariable;
 import us.ihmc.robotics.math.filters.FilteredVelocityYoVariable;
 import us.ihmc.tMotorCore.CANMessages.TMotorCommand;
@@ -151,8 +152,8 @@ public class TMotor
       coolingTerm = new YoDouble(prefix + "coolingTerm", registry);
       thermalMass = new YoDouble(prefix + "thermalMass", registry);
 
-      ambientTemp.set(25.0);
-      estimatedTemp.set(25.0);
+      ambientTemp.set(40.0);
+      estimatedTemp.set(40.0);
       resistance.set(motorParameters.getMotorResistance());
       heatingGain.set(motorParameters.getHeatingCoefficient());
       coolingGain.set(motorParameters.getCoolingCoefficient());
@@ -183,8 +184,19 @@ public class TMotor
       measuredTorqueFiltered.update();
 
       double deltaFromAmbient = estimatedTemp.getDoubleValue() - ambientTemp.getDoubleValue();
+      double maxDelta = 100.0 - ambientTemp.getDoubleValue();
+      double percentageOfMaxDelta = deltaFromAmbient / maxDelta;
+      
+      if(Double.isNaN(percentageOfMaxDelta))
+      {
+         percentageOfMaxDelta = 0.0;
+      }
+      
+      percentageOfMaxDelta = 1.0 - percentageOfMaxDelta;
+      percentageOfMaxDelta = MathTools.clamp(percentageOfMaxDelta, 0.1, 1.0);
+
       double i2r = measuredCurrent.getDoubleValue() * measuredCurrent.getDoubleValue() * resistance.getDoubleValue();
-      heatingTerm.set(i2r * (1.0 + heatingGain.getDoubleValue() * deltaFromAmbient));
+      heatingTerm.set(i2r * heatingGain.getDoubleValue() * percentageOfMaxDelta);
       coolingTerm.set(coolingGain.getDoubleValue() * deltaFromAmbient);
 
       estimatedTemp.add(dt * (heatingTerm.getDoubleValue() - coolingTerm.getDoubleValue()) / thermalMass.getDoubleValue());
