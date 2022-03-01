@@ -83,7 +83,7 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
    // CAN-related goodies
    private PCANBasic can = new PCANBasic();
    private final TPCANHandle channel1 = TPCANHandle.PCAN_PCIBUS1;
-   private final TPCANHandle channel2 = TPCANHandle.PCAN_PCIBUS2;
+//   private final TPCANHandle channel2 = TPCANHandle.PCAN_PCIBUS2;
    private final TPCANMsg receivedMsg = new TPCANMsg();
    private TPCANStatus status = null;
    private static final int CAN_ID = 2; // 10; // 1; //  2; // 9; //
@@ -162,8 +162,8 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
 //      status = can.Initialize(channel1, TPCANBaudrate.PCAN_BAUD_1M, TPCANType.PCAN_TYPE_NONE, 0, (short) 0);
 //      LogTools.info("channel 1 " + channel1.getValue() + " initialized. Status: " + status);
 
-      status = can.Initialize(channel2, TPCANBaudrate.PCAN_BAUD_1M, TPCANType.PCAN_TYPE_NONE, 0, (short) 0);
-      LogTools.info("channel 2 " + channel2.getValue() + " initialized. Status: " + status);
+      status = can.Initialize(channel1, TPCANBaudrate.PCAN_BAUD_1M, TPCANType.PCAN_TYPE_NONE, 0, (short) 0);
+      LogTools.info("channel 1 " + channel1.getValue() + " initialized. Status: " + status);
 
       //     can.SetRcvEvent(channel);
    }
@@ -171,7 +171,7 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
    private void motorRead()
    {
       TPCANStatus readStatus;
-      while((readStatus = can.Read(channel2, receivedMsg, null)) != PCAN_ERROR_QRCVEMPTY)
+      while((readStatus = can.Read(channel1, receivedMsg, null)) != PCAN_ERROR_QRCVEMPTY)
       {
          if (readStatus == TPCANStatus.PCAN_ERROR_OK)
          {
@@ -189,7 +189,7 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
    private void motorWrite()
    {
       TPCANMsg motorCommand = tMotor.getCommandedMsg();
-      status = can.Write(channel2, motorCommand);
+      status = can.Write(channel1, motorCommand);
       if (status != TPCANStatus.PCAN_ERROR_OK)
       {
          writeErrorCounter.increment();
