@@ -20,11 +20,23 @@ public interface TMotorParameters
 
    double getGearRatio();
 
-   double getMotorResistance();
-
-   double getHeatingCoefficient();
-
-   double getCoolingCoefficient();
-
    double getKt();
+
+   double getCoilThermalMass();
+
+   double getMotorThermalMass();
+
+   double getEnvironmentThermalMass();
+
+   double getmotorCoilConductivity();
+
+   double getenvMotorConductivity();
+
+   double getCurrentAlpha();
+
+   double getElectricalResistance();
+
+   double getAmbientResistorTemperature();
+
+   double getDefaultAmbientTemperature();
 }

@@ -8,6 +8,7 @@ import us.ihmc.robotics.math.filters.FilteredVelocityYoVariable;
 import us.ihmc.tMotorCore.CANMessages.TMotorCommand;
 import us.ihmc.tMotorCore.CANMessages.TMotorReply;
 import us.ihmc.tMotorCore.parameters.TMotorParameters;
+import us.ihmc.temperatureModel.CurrentProvider;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoInteger;
@@ -75,14 +76,9 @@ public class TMotor
    private final YoDouble desiredKd;
 
    //temp model  (should move to own class when tested)
-   private final YoDouble ambientTemp;
    private final YoDouble estimatedTemp;
-   private final YoDouble resistance;
-   private final YoDouble heatingGain;
-   private final YoDouble coolingGain;
-   private final YoDouble heatingTerm;
-   private final YoDouble coolingTerm;
-   private final YoDouble thermalMass;
+
+   private TMotorTemperatureModel temperatureModel;
 
    private double dt;
 
@@ -142,22 +138,10 @@ public class TMotor
       measuredVelocityFD = new FilteredVelocityYoVariable(prefix + "measuredVelocityFilt", null, measuredVelocityFDAlpha, measuredPosition, dt, registry);
       measuredVelocityFDAlpha.set(0.95);
 
-      //temp model
-      ambientTemp = new YoDouble(prefix + "ambientTemp", registry);
-      estimatedTemp = new YoDouble(prefix + "estimatedTemp", registry);
-      resistance = new YoDouble(prefix + "resistance", registry);
-      heatingGain = new YoDouble(prefix + "heatingGain", registry);
-      coolingGain = new YoDouble(prefix + "coolingGain", registry);
-      heatingTerm = new YoDouble(prefix + "heatingTerm", registry);
-      coolingTerm = new YoDouble(prefix + "coolingTerm", registry);
-      thermalMass = new YoDouble(prefix + "thermalMass", registry);
+      estimatedTemp = new YoDouble(prefix + "measuredActuatorPosition", registry);
 
-      ambientTemp.set(40.0);
-      estimatedTemp.set(40.0);
-      resistance.set(motorParameters.getMotorResistance());
-      heatingGain.set(motorParameters.getHeatingCoefficient());
-      coolingGain.set(motorParameters.getCoolingCoefficient());
-      thermalMass.set(1.0);
+      CurrentProvider currentProvider = () -> this.getCurrent();
+      temperatureModel = new TMotorTemperatureModel(motorParameters, currentProvider, registry);
 
       parentRegistry.addChild(registry);
    }
@@ -183,23 +167,8 @@ public class TMotor
       measuredVelocityFD.update();
       measuredTorqueFiltered.update();
 
-      double deltaFromAmbient = estimatedTemp.getDoubleValue() - ambientTemp.getDoubleValue();
-      double maxDelta = 100.0 - ambientTemp.getDoubleValue();
-      double percentageOfMaxDelta = deltaFromAmbient / maxDelta;
-      
-      if(Double.isNaN(percentageOfMaxDelta))
-      {
-         percentageOfMaxDelta = 0.0;
-      }
-      
-      percentageOfMaxDelta = 1.0 - percentageOfMaxDelta;
-      percentageOfMaxDelta = MathTools.clamp(percentageOfMaxDelta, 0.1, 1.0);
-
-      double i2r = measuredCurrent.getDoubleValue() * measuredCurrent.getDoubleValue() * resistance.getDoubleValue();
-      heatingTerm.set(i2r * heatingGain.getDoubleValue() * percentageOfMaxDelta);
-      coolingTerm.set(coolingGain.getDoubleValue() * deltaFromAmbient);
-
-      estimatedTemp.add(dt * (heatingTerm.getDoubleValue() - coolingTerm.getDoubleValue()) / thermalMass.getDoubleValue());
+      temperatureModel.update(dt);
+      estimatedTemp.set(temperatureModel.getTemperature());
    }
 
    /**
@@ -318,5 +287,10 @@ public class TMotor
    public TPCANMsg getCommandedMsg()
    {
       return motorCommand.getCANMsg();
+   }
+
+   public double getCurrent()
+   {
+      return this.measuredCurrent.getDoubleValue();
    }
 }

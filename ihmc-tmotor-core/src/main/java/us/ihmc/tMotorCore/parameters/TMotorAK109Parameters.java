@@ -59,32 +59,62 @@ public class TMotorAK109Parameters implements TMotorParameters
     }
 
    @Override
-   public double getMotorResistance()
-   {
-      return 0.09;
-   }
-
-   /**
-    * The temperature coefficient of resistance (0.00393 for copper):
-    */
-   @Override
-   public double getHeatingCoefficient()
-   {
-      return 0.0135;
-   }
-
-   /**
-    * The thermal resistance to ambient 
-    */
-   @Override
-   public double getCoolingCoefficient()
-   {
-      return 0.0034;
-   }
-
-   @Override
    public double getKt()
    {
       return 0.095;
+   }
+
+   @Override
+   public double getCoilThermalMass()
+   {
+      return 50.26554252; // These values were fitted in python. Ask Evan
+   }
+
+   @Override
+   public double getMotorThermalMass()
+   {
+      return 204.84313289; // These values were fitted in python. Ask Evan
+   }
+
+   @Override
+   public double getEnvironmentThermalMass()
+   {
+      return Double.POSITIVE_INFINITY; // huge
+   }
+
+   @Override
+   public double getmotorCoilConductivity()
+   {
+      return 1.95460431; // These values were fitted in python. Ask Evan
+   }
+
+   @Override
+   public double getenvMotorConductivity()
+   {
+      return 0.77873133; // These values were fitted in python. Ask Evan
+   }
+
+   @Override
+   public double getCurrentAlpha()
+   {
+      return 0.00393; // https://build-its-inprogress.blogspot.com/2019/
+   }
+
+   @Override
+   public double getElectricalResistance()
+   {
+      return 0.09; // https://store.tmotor.com/goods.php?id=1148
+   }
+
+   @Override
+   public double getAmbientResistorTemperature()
+   {
+      return 25.0;
+   }
+
+   @Override
+   public double getDefaultAmbientTemperature()
+   {
+      return 25.0;
    }
 }
