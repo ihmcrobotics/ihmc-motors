@@ -138,7 +138,7 @@ public class TMotor
       measuredVelocityFD = new FilteredVelocityYoVariable(prefix + "measuredVelocityFilt", null, measuredVelocityFDAlpha, measuredPosition, dt, registry);
       measuredVelocityFDAlpha.set(0.95);
 
-      estimatedTemp = new YoDouble(prefix + "measuredActuatorPosition", registry);
+      estimatedTemp = new YoDouble(prefix + "estimatedTemperature", registry);
 
       CurrentProvider currentProvider = () -> this.getCurrent();
       temperatureModel = new TMotorTemperatureModel(motorParameters, currentProvider, registry);

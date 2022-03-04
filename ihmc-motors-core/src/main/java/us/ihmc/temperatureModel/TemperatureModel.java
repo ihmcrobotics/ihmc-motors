@@ -1,10 +1,11 @@
 package us.ihmc.temperatureModel;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class TemperatureModel
 {
-   protected TemperatureSimulator simulator;
+   protected TemperatureSimulator simulator = new TemperatureSimulator();
 
    public abstract double getTemperature();
 
@@ -14,8 +15,8 @@ public abstract class TemperatureModel
 
    protected class TemperatureSimulator
    {
-      private List<HeatableItem> heatableItems;
-      private List<HeatRelation> heatRelations;
+      private List<HeatableItem> heatableItems = new ArrayList<HeatableItem>();
+      private List<HeatRelation> heatRelations = new ArrayList<HeatRelation>();
 
       public void addHeatItem(HeatableItem heatItem)
       {

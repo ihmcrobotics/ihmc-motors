@@ -1,11 +1,8 @@
 package us.ihmc.temperatureModel;
 
-import org.omg.CORBA.Current;
-
 public class CurrentHeatProvider implements HeatValueProvider
 {
    private final HeatableItem coilItem;
-   private double current;
    private final double alpha;
    private final double resistance;
    private final double ambientResistorTemperature;
@@ -16,7 +13,6 @@ public class CurrentHeatProvider implements HeatValueProvider
    {
       this.coilItem = coilItem;
       this.currentProvider = currentProvider;
-      this.current = 0.0;
       this.alpha = alpha;
       this.resistance = resistance;
       this.ambientResistorTemperature = ambientResistorTemperature;
@@ -30,7 +26,8 @@ public class CurrentHeatProvider implements HeatValueProvider
 
    private double calculateHeatFromCurrent(double current)
    {
+      current += 0.008;
       // see https://build-its-inprogress.blogspot.com/2019/
-      return (1 + alpha * (coilItem.getTemperature()) - ambientResistorTemperature) * resistance * current * current;
+      return (1 + alpha * (coilItem.getTemperature() - ambientResistorTemperature)) * resistance * current * current;
    }
 }
