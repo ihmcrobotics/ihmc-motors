@@ -26,7 +26,10 @@ public class CurrentHeatProvider implements HeatValueProvider
 
    private double calculateHeatFromCurrent(double current)
    {
-      current += 0.008;
+      if (current < 0)
+      {
+         current = 0;
+      }
       // see https://build-its-inprogress.blogspot.com/2019/
       return (1 + alpha * (coilItem.getTemperature() - ambientResistorTemperature)) * resistance * current * current;
    }

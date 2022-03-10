@@ -67,13 +67,13 @@ public class TMotorAK109Parameters implements TMotorParameters
    @Override
    public double getCoilThermalMass()
    {
-      return 50.26554252; // These values were fitted in python. Ask Evan
+      return 51.00502884; // These values were fitted in python. Ask Evan
    }
 
    @Override
    public double getMotorThermalMass()
    {
-      return 204.84313289; // These values were fitted in python. Ask Evan
+      return 246.16215547; // These values were fitted in python. Ask Evan
    }
 
    @Override
@@ -83,15 +83,15 @@ public class TMotorAK109Parameters implements TMotorParameters
    }
 
    @Override
-   public double getmotorCoilConductivity()
+   public double getMotorCoilConductivity()
    {
-      return 1.95460431; // These values were fitted in python. Ask Evan
+      return 1.80814198; // These values were fitted in python. Ask Evan
    }
 
    @Override
-   public double getenvMotorConductivity()
+   public double getEnvMotorConductivity()
    {
-      return 0.77873133; // These values were fitted in python. Ask Evan
+      return 0.37162564; // These values were fitted in python. Ask Evan
    }
 
    @Override

@@ -28,9 +28,9 @@ public interface TMotorParameters
 
    double getEnvironmentThermalMass();
 
-   double getmotorCoilConductivity();
+   double getMotorCoilConductivity();
 
-   double getenvMotorConductivity();
+   double getEnvMotorConductivity();
 
    double getCurrentAlpha();
 

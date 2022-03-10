@@ -67,13 +67,13 @@ public class TMotorAK809Parameters implements TMotorParameters
    @Override
    public double getCoilThermalMass()
    {
-      return 1.0; // to fit
+      return 40.83435171; // from fit. ask evan
    }
 
    @Override
    public double getMotorThermalMass()
    {
-      return 1.0; // to fit
+      return 341.45827174; // from fit. ask evan
    }
 
    @Override
@@ -83,15 +83,15 @@ public class TMotorAK809Parameters implements TMotorParameters
    }
 
    @Override
-   public double getmotorCoilConductivity()
+   public double getMotorCoilConductivity()
    {
-      return 1.0; // to fit
+      return 1.75890955; // from fit. ask evan
    }
 
    @Override
-   public double getenvMotorConductivity()
+   public double getEnvMotorConductivity()
    {
-      return 1.0; // to fit
+      return 0.7037211; // from fit. ask evan
    }
 
    @Override

@@ -23,8 +23,8 @@ public class TMotorTemperatureModel extends TemperatureModel
       this.motorBulkHeatItem = new HeatableItem("MotorBulk", ambientTemperature, parameters.getMotorThermalMass(), registry);
       this.environmentHeatItem = new HeatableItem("Environment", ambientTemperature, parameters.getEnvironmentThermalMass(), registry);
 
-      this.motorCoilConduction = new ConductionHeatRelation(this.coilHeatItem, this.motorBulkHeatItem, parameters.getmotorCoilConductivity());
-      this.envMotorConduction = new ConductionHeatRelation(this.motorBulkHeatItem, this.environmentHeatItem, parameters.getenvMotorConductivity());
+      this.motorCoilConduction = new ConductionHeatRelation(this.coilHeatItem, this.motorBulkHeatItem, parameters.getMotorCoilConductivity());
+      this.envMotorConduction = new ConductionHeatRelation(this.motorBulkHeatItem, this.environmentHeatItem, parameters.getEnvMotorConductivity());
       this.currentHeatProvider = new CurrentHeatProvider(this.coilHeatItem, currentProvider,
                                                          parameters.getCurrentAlpha(), parameters.getElectricalResistance(), parameters.getAmbientResistorTemperature());
       this.currentPowerSource = new PowerSourceHeatRelation(this.coilHeatItem, this.currentHeatProvider);
