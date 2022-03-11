@@ -86,7 +86,7 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
 //   private final TPCANHandle channel2 = TPCANHandle.PCAN_PCIBUS2;
    private final TPCANMsg receivedMsg = new TPCANMsg();
    private TPCANStatus status = null;
-   private static final int CAN_ID = 2; // 10; // 1; //  2; // 9; //
+   private static final int CAN_ID = 11; // 10; // 1; //  2; // 9; //
 
    private final YoAnalogSignalWrapper torqueSensorProcessor;
    private final ButterworthFilteredYoVariable filteredTorque;
@@ -113,7 +113,7 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
       
       EL9510 el9510 = new EL9510(0, 3);
       
-      tMotor = new TMotor(CAN_ID, "tMotor", TMotorVersion.AK109, DT, registry);
+      tMotor = new TMotor(CAN_ID, "tMotor", TMotorVersion.AK809, DT, registry);
       motorController = new TMotorLowLevelController("tMotorController", tMotor, registry);
       motorController.setUnsafeOutputSpeed(12.0);
 
