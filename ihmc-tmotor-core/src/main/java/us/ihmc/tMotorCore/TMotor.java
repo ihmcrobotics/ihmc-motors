@@ -3,6 +3,7 @@ package us.ihmc.tMotorCore;
 import peak.can.basic.TPCANMsg;
 import us.ihmc.CAN.YoCANMsg;
 import us.ihmc.commons.MathTools;
+import us.ihmc.euclid.tools.EuclidCoreTools;
 import us.ihmc.robotics.math.filters.AlphaFilteredYoVariable;
 import us.ihmc.robotics.math.filters.FilteredVelocityYoVariable;
 import us.ihmc.tMotorCore.CANMessages.TMotorCommand;
@@ -45,6 +46,9 @@ public class TMotor
     * by this value.
     */
    private final YoDouble torqueScale;
+   private static final double minTorqueScale = 1.0e-2;
+   private static final double maxTorqueScale = 1.0e2;
+
    private final YoDouble gearRatio;
    private final YoDouble kt;
 
@@ -159,9 +163,10 @@ public class TMotor
       measuredVelocityRaw.set(motorReply.getMeasuredVelocityRaw());
       measuredTorqueRaw.set(motorReply.getMeasuredTorqueRaw());
 
+      double torqueScale = EuclidCoreTools.clamp(this.torqueScale.getValue(), minTorqueScale, maxTorqueScale);
       measuredPosition.set(motorDirection.getValue() * motorReply.getMeasuredPosition() + offsetInterval.getValue() * outputAnglePerInputRevolution);
       measuredVelocity.set(motorDirection.getValue() * motorReply.getMeasuredVelocity());
-      measuredTorque.set(motorDirection.getValue() * motorReply.getMeasuredTorque() * torqueScale.getDoubleValue());
+      measuredTorque.set(motorDirection.getValue() * motorReply.getMeasuredTorque() * torqueScale);
       measuredCurrent.set(measuredTorque.getDoubleValue() / gearRatio.getDoubleValue() / kt.getDoubleValue());
 
       measuredVelocityFD.update();
@@ -176,9 +181,10 @@ public class TMotor
     */
    public void setCommand(double kp, double kd, double desiredPosition, double desiredVelocity, double desiredTorque)
    {
+      double torqueScale = EuclidCoreTools.clamp(this.torqueScale.getValue(), minTorqueScale, maxTorqueScale);
       double adjustedDesiredPosition = motorDirection.getValue() * (desiredPosition - offsetInterval.getValue() * outputAnglePerInputRevolution);
       double adjustedDesiredVelocity = motorDirection.getValue() * desiredVelocity;
-      double adjustedDesiredTorque = motorDirection.getValue() * desiredTorque / torqueScale.getDoubleValue();
+      double adjustedDesiredTorque = motorDirection.getValue() * desiredTorque / torqueScale;
 
       this.desiredPosition.set(adjustedDesiredPosition);
       this.desiredVelocity.set(adjustedDesiredVelocity);
