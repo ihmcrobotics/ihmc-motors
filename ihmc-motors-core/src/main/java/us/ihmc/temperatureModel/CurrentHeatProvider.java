@@ -1,5 +1,8 @@
 package us.ihmc.temperatureModel;
 
+import us.ihmc.yoVariables.registry.YoRegistry;
+import us.ihmc.yoVariables.variable.YoDouble;
+
 public class CurrentHeatProvider implements HeatValueProvider
 {
    private final HeatableItem coilItem;
@@ -7,15 +10,19 @@ public class CurrentHeatProvider implements HeatValueProvider
    private final double resistance;
    private final double ambientResistorTemperature;
    private final CurrentProvider currentProvider;
+   
+   private final YoDouble heatFromCurrent;
 
-   public CurrentHeatProvider(HeatableItem coilItem, CurrentProvider currentProvider,
-                              double alpha, double resistance, double ambientResistorTemperature)
+   public CurrentHeatProvider(String prefix, HeatableItem coilItem, CurrentProvider currentProvider,
+                              double alpha, double resistance, double ambientResistorTemperature,
+                              YoRegistry registry)
    {
       this.coilItem = coilItem;
       this.currentProvider = currentProvider;
       this.alpha = alpha;
       this.resistance = resistance;
       this.ambientResistorTemperature = ambientResistorTemperature;
+      heatFromCurrent = new YoDouble(prefix + "HeatFromCurrent", registry);
    }
 
    @Override
@@ -26,7 +33,9 @@ public class CurrentHeatProvider implements HeatValueProvider
 
    private double calculateHeatFromCurrent(double current)
    {
+      double heatFromCurrentVal = (1 + alpha * (coilItem.getTemperature() - ambientResistorTemperature)) * resistance * (current * current);
+      this.heatFromCurrent.set(heatFromCurrentVal);
       // see https://build-its-inprogress.blogspot.com/2019/
-      return (1 + alpha * (coilItem.getTemperature() - ambientResistorTemperature)) * resistance * current * current;
+      return heatFromCurrentVal;
    }
 }

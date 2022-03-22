@@ -145,7 +145,7 @@ public class TMotor
       estimatedTemp = new YoDouble(prefix + "estimatedTemperature", registry);
 
       CurrentProvider currentProvider = () -> this.getCurrent();
-      temperatureModel = new TMotorTemperatureModel(motorParameters, currentProvider, registry);
+      temperatureModel = new TMotorTemperatureModel(prefix, motorParameters, currentProvider, registry);
 
       parentRegistry.addChild(registry);
    }

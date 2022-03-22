@@ -16,17 +16,18 @@ public class TMotorTemperatureModel extends TemperatureModel
    private final CurrentHeatProvider currentHeatProvider;
    private final PowerSourceHeatRelation currentPowerSource;
 
-   public TMotorTemperatureModel(TMotorParameters parameters, CurrentProvider currentProvider, YoRegistry parentRegistry)
+   public TMotorTemperatureModel(String prefix, TMotorParameters parameters, CurrentProvider currentProvider, YoRegistry parentRegistry)
    {
       double ambientTemperature = parameters.getDefaultAmbientTemperature();
-      this.coilHeatItem = new HeatableItem("Coil", ambientTemperature, parameters.getCoilThermalMass(), registry);
-      this.motorBulkHeatItem = new HeatableItem("MotorBulk", ambientTemperature, parameters.getMotorThermalMass(), registry);
-      this.environmentHeatItem = new HeatableItem("Environment", ambientTemperature, parameters.getEnvironmentThermalMass(), registry);
+      this.coilHeatItem = new HeatableItem(prefix + "Coil", ambientTemperature, parameters.getCoilThermalMass(), registry);
+      this.motorBulkHeatItem = new HeatableItem(prefix + "MotorBulk", ambientTemperature, parameters.getMotorThermalMass(), registry);
+      this.environmentHeatItem = new HeatableItem(prefix + "Environment", ambientTemperature, parameters.getEnvironmentThermalMass(), registry);
 
       this.motorCoilConduction = new ConductionHeatRelation(this.coilHeatItem, this.motorBulkHeatItem, parameters.getMotorCoilConductivity());
       this.envMotorConduction = new ConductionHeatRelation(this.motorBulkHeatItem, this.environmentHeatItem, parameters.getEnvMotorConductivity());
-      this.currentHeatProvider = new CurrentHeatProvider(this.coilHeatItem, currentProvider,
-                                                         parameters.getCurrentAlpha(), parameters.getElectricalResistance(), parameters.getAmbientResistorTemperature());
+      this.currentHeatProvider = new CurrentHeatProvider(prefix, this.coilHeatItem, currentProvider,
+                                                         parameters.getCurrentAlpha(), parameters.getElectricalResistance(), parameters.getAmbientResistorTemperature(),
+                                                         registry);
       this.currentPowerSource = new PowerSourceHeatRelation(this.coilHeatItem, this.currentHeatProvider);
 
       this.simulator.addHeatItem(this.coilHeatItem);
