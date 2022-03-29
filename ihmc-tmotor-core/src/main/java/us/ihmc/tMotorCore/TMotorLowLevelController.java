@@ -4,6 +4,7 @@ import peak.can.basic.TPCANMsg;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
+import us.ihmc.yoVariables.variable.YoLong;
 
 public class TMotorLowLevelController
 {
@@ -15,6 +16,10 @@ public class TMotorLowLevelController
    private final YoBoolean sendEnableMotorCommand;
    private final YoBoolean sendDisableMotorCommand;
    private final YoBoolean sendZeroMotorCommand;
+   
+   private final YoLong resendEnableCounter;
+   private final YoLong resendDisableCounter;
+   private final YoLong numberOfTimesToResendCommands;
 
    //desireds
    private final YoDouble desiredActuatorPosition;
@@ -38,6 +43,11 @@ public class TMotorLowLevelController
       sendEnableMotorCommand = new YoBoolean(name + "_sendEnableMotorCommand", registry);
       sendDisableMotorCommand = new YoBoolean(name + "_sendDisableMotorCommand", registry);
       sendZeroMotorCommand = new YoBoolean(name + "_sendZeroMotorCommand", registry);
+      
+      resendEnableCounter = new YoLong("resendEnableCounter", registry);
+      resendDisableCounter = new YoLong("resendDisableCounter", registry);
+      numberOfTimesToResendCommands = new YoLong("numberOfTimesToResendCommands", registry);
+      numberOfTimesToResendCommands.set(2);
 
       motorPositionKp = new YoDouble(name + "_motorPositionKp", registry);
       motorVelocityKd = new YoDouble(name + "_motorVelocityKd", registry);
@@ -55,14 +65,27 @@ public class TMotorLowLevelController
       if (sendDisableMotorCommand.getBooleanValue())
       {
          tMotor.setCommandToDisableMotor();
-         sendDisableMotorCommand.set(false);
+         resendDisableCounter.increment();
+         
+         if(resendDisableCounter.getLongValue() >= numberOfTimesToResendCommands.getLongValue())
+         {
+            sendDisableMotorCommand.set(false);
+            resendDisableCounter.set(0);
+         }
          return;
       }
       
       if (sendEnableMotorCommand.getBooleanValue())
       {
          tMotor.setCommandToEnableMotor();
-         sendEnableMotorCommand.set(false);
+         resendEnableCounter.increment();
+         
+         if(resendEnableCounter.getLongValue() >= numberOfTimesToResendCommands.getLongValue())
+         {
+            sendEnableMotorCommand.set(false);
+            resendEnableCounter.set(0);
+         }
+         
          return;
       }
 
