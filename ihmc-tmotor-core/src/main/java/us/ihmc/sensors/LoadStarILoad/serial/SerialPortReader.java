@@ -1,13 +1,11 @@
 package us.ihmc.sensors.LoadStarILoad.serial;
 
+import java.io.IOException;
+
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import jssc.SerialPort;
 import jssc.SerialPortException;
-import org.lwjgl.Sys;
-import us.ihmc.sensors.LoadStarILoad.LoadstarILoadByteManipulationTools;
-
-import java.io.IOException;
 
 public class SerialPortReader implements Runnable
 {
