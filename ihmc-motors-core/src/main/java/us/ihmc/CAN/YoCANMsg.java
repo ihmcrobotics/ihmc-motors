@@ -45,15 +45,25 @@ public class YoCANMsg
        CANSentMessageBuffer7 = new YoInteger(prefix + "CANSentMessageBuffer7", registry);         
         parentRegistry.addChild(registry);
     }
-
+    
     public void setReceived(TPCANMsg msg)
     {
-        CANReceivedMessageBuffer0.set(msg.getData()[0]);
-        CANReceivedMessageBuffer1.set(msg.getData()[1]);
-        CANReceivedMessageBuffer2.set(msg.getData()[2]);
-        CANReceivedMessageBuffer3.set(msg.getData()[3]);
-        CANReceivedMessageBuffer4.set(msg.getData()[4]);
-        CANReceivedMessageBuffer5.set(msg.getData()[5]);
+       setReceived(msg.getData());
+    }
+
+    public void setReceived(byte[] msg)
+    {
+        CANReceivedMessageBuffer0.set(msg[0]);
+        CANReceivedMessageBuffer1.set(msg[1]);
+        CANReceivedMessageBuffer2.set(msg[2]);
+        CANReceivedMessageBuffer3.set(msg[3]);
+        CANReceivedMessageBuffer4.set(msg[4]);
+        CANReceivedMessageBuffer5.set(msg[5]);
+    }
+    
+    public void setSent(TPCANMsg msg)
+    {
+       setSent(msg.getData());
     }
 
     public void setSent(byte[] msg)

@@ -1,13 +1,26 @@
 package us.ihmc.teststands;
 
+import static peak.can.basic.TPCANStatus.PCAN_ERROR_QRCVEMPTY;
+
+import java.util.HashMap;
+
 import gnu.trove.map.hash.TIntObjectHashMap;
-import peak.can.basic.*;
+import peak.can.basic.PCANBasic;
+import peak.can.basic.TPCANBaudrate;
+import peak.can.basic.TPCANHandle;
+import peak.can.basic.TPCANMsg;
+import peak.can.basic.TPCANStatus;
+import peak.can.basic.TPCANType;
+import us.ihmc.CAN.CANTools;
 import us.ihmc.commons.Conversions;
-import us.ihmc.realtime.*;
+import us.ihmc.realtime.CPUDMALatency;
+import us.ihmc.realtime.MonotonicTime;
+import us.ihmc.realtime.PeriodicParameters;
+import us.ihmc.realtime.PriorityParameters;
+import us.ihmc.realtime.RealtimeThread;
 import us.ihmc.robotDataLogger.YoVariableServer;
 import us.ihmc.robotDataLogger.logger.DataServerSettings;
 import us.ihmc.robotics.math.functionGenerator.YoFunctionGenerator;
-import us.ihmc.tMotorCore.CANMessages.TMotorCANReplyMessage;
 import us.ihmc.tMotorCore.TMotor;
 import us.ihmc.tMotorCore.TMotorLowLevelController;
 import us.ihmc.tMotorCore.TMotorVersion;
@@ -16,10 +29,6 @@ import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoInteger;
 import us.ihmc.yoVariables.variable.YoLong;
-
-import java.util.HashMap;
-
-import static peak.can.basic.TPCANStatus.PCAN_ERROR_QRCVEMPTY;
 
 public class TMotorTestBed extends RealtimeThread
 {
@@ -52,7 +61,7 @@ public class TMotorTestBed extends RealtimeThread
 
    // CAN-related goodies
    private PCANBasic can = new PCANBasic();
-   private final TPCANHandle channel = TPCANHandle.PCAN_PCIBUS1;
+   private final TPCANHandle channel = TPCANHandle.PCAN_PCIBUS2;
    private final TPCANMsg receivedMsg = new TPCANMsg();
    private TPCANStatus status = null;
 
@@ -82,11 +91,11 @@ public class TMotorTestBed extends RealtimeThread
       functionGenerator = new YoFunctionGenerator("functionGenerator", yoTime, registry);
       functionGenerator.setAlphaForSmoothing(0.99);
 
-      TMotor kneeMotor = new TMotor(KNEE_CAN_ID, "kneeMotor", TMotorVersion.AK109, DT, registry);
-      motors.put(kneeMotor.getID(), kneeMotor);
-      TMotorLowLevelController kneeController = new TMotorLowLevelController("kneeController", kneeMotor, registry);
-      kneeController.setUnsafeOutputSpeed(16.0);
-      motorControllers.put(kneeMotor, kneeController);
+//      TMotor kneeMotor = new TMotor(KNEE_CAN_ID, "kneeMotor", TMotorVersion.AK109, DT, registry);
+//      motors.put(kneeMotor.getID(), kneeMotor);
+//      TMotorLowLevelController kneeController = new TMotorLowLevelController("kneeController", kneeMotor, registry);
+//      kneeController.setUnsafeOutputSpeed(16.0);
+//      motorControllers.put(kneeMotor, kneeController);
 
       motorIDs = motors.keys();
 
@@ -160,7 +169,7 @@ public class TMotorTestBed extends RealtimeThread
       {
          if (readStatus == TPCANStatus.PCAN_ERROR_OK)
          {
-            int id = TMotorCANReplyMessage.getID(receivedMsg);
+            int id = CANTools.getID(receivedMsg);
             if(motors.containsKey(id))
                motors.get(id).read(receivedMsg);
             messagesInReadBus.increment();
@@ -179,7 +188,7 @@ public class TMotorTestBed extends RealtimeThread
       {
          motorControllers.get(motors.get(motorIDs[id])).setDesiredPosition(functionGenerator.getValue());
          motorControllers.get(motors.get(motorIDs[id])).setDesiredVelocity(functionGenerator.getValueDot());
-         motorControllers.get(motors.get(motorIDs[id])).setDesiredTorque(0.0);
+//         motorControllers.get(motors.get(motorIDs[id])).setDesiredTorque(0.0);
 
          motorControllers.get(motors.get(motorIDs[id])).doControl();
       }
