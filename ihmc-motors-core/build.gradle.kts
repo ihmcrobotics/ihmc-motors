@@ -17,7 +17,7 @@ ihmc {
 }
 
 mainDependencies {
-   api("us.ihmc:ihmc-realtime:1.4.0")
+   api("us.ihmc:ihmc-realtime:1.5.0")
    api("us.ihmc:ihmc-ethercat-master:0.12.0")
    api("us.ihmc:ihmc-robot-data-logger:0.23.0")
    api("us.ihmc:ihmc-robot-data-visualizer:source")
