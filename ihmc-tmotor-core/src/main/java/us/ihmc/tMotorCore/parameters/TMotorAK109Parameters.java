@@ -9,8 +9,8 @@ public class TMotorAK109Parameters implements TMotorParameters
    private static final double MIN_TORQUE = -16.0f;
    private static final double MAX_TORQUE = 16.0f;
 
-   private final static double MAXIMUM_KP = 500;
-   private final static double MAXIMUM_KD = 100;
+   private final static double MAXIMUM_KP = 500.0;
+   private final static double MAXIMUM_KD = 100.0;
 
    public double getPositionLimitLower()
    {

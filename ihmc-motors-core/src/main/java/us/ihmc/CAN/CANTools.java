@@ -41,4 +41,21 @@ public class CANTools
    {
       return message.getData()[0];
    }
+   
+   public static void main(String[] args)
+   {
+      double max = Math.random() * 100.0;
+      double min = -max;
+      
+      for(int i = 0; i < 10000; i++)
+      {
+         double value = Math.random() * max * 2.0 - max;
+         int test = double_to_uint(value, min, max, 12);
+         double result = uint_to_double(test, min, max, 12);
+         if(Math.abs(value - result) > 0.02)
+         {
+            System.out.println(value + "," + result);
+         }
+      }
+   }
 }
