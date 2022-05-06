@@ -29,6 +29,7 @@ public class TMotor
    private final TMotorCommand motorCommand; // CAN message sent to motor
    private final TMotorReply motorReply; // CAN message reply from motor
    private final YoCANMsg yoCANMsg;
+   private final TMotorVersion version;
 
    /**
     * The encoder is on the input side, and is clipped to (-pi,pi) on boot. So on the output side, the
@@ -82,16 +83,23 @@ public class TMotor
    //temp model  (should move to own class when tested)
    private final YoDouble estimatedTemp;
 
-   private TMotorTemperatureModel temperatureModel;
+   private final TMotorTemperatureModel temperatureModel;
+   private final TMotorOverTorqueProcessor overTorqueProcessor;
 
    private double dt;
 
    public TMotor(int id, String name, TMotorVersion version, double dt, YoRegistry parentRegistry)
    {
+      this(id, name, version, dt, false, null, parentRegistry);
+   }
+
+   public TMotor(int id, String name, TMotorVersion version, double dt, boolean useTorqueProcessor, YoDouble yoTime, YoRegistry parentRegistry)
+   {
       this.ID = id;
       this.motorName = name;
       this.dt = dt;
       String prefix = motorName + "_";
+      this.version = version;
 
       TMotorParameters motorParameters = version.getMotorParameters();
 
@@ -143,9 +151,16 @@ public class TMotor
       measuredVelocityFDAlpha.set(0.95);
 
       estimatedTemp = new YoDouble(prefix + "estimatedTemperature", registry);
+      temperatureModel = new TMotorTemperatureModel(prefix, motorParameters, this::getCurrent, registry);
 
-      CurrentProvider currentProvider = () -> this.getCurrent();
-      temperatureModel = new TMotorTemperatureModel(prefix, motorParameters, currentProvider, registry);
+      if (useTorqueProcessor && yoTime != null)
+      {
+         overTorqueProcessor = new TMotorOverTorqueProcessor(prefix, yoTime, version.getMotorParameters().getTorqueLimitUpper(), torqueScale, measuredTorque, registry);
+      }
+      else
+      {
+         overTorqueProcessor = null;
+      }
 
       parentRegistry.addChild(registry);
    }
@@ -168,6 +183,11 @@ public class TMotor
       measuredVelocity.set(motorDirection.getValue() * motorReply.getMeasuredVelocity());
       measuredTorque.set(motorDirection.getValue() * motorReply.getMeasuredTorque() * torqueScale);
       measuredCurrent.set(measuredTorque.getDoubleValue() / gearRatio.getDoubleValue() / kt.getDoubleValue());
+
+      if (overTorqueProcessor != null)
+      {
+         measuredTorque.add(overTorqueProcessor.updateTorqueOffset());
+      }
 
       measuredVelocityFD.update();
       measuredTorqueFiltered.update();
@@ -275,6 +295,11 @@ public class TMotor
       this.torqueScale.set(torqueScaling);
    }
 
+   public double getTorqueScale()
+   {
+      return torqueScale.getDoubleValue();
+   }
+
    public void setOffsetInterval(int offsetInterval)
    {
       this.offsetInterval.set(offsetInterval);
@@ -298,5 +323,10 @@ public class TMotor
    public double getCurrent()
    {
       return this.measuredCurrent.getDoubleValue();
+   }
+
+   public TMotorVersion getVersion()
+   {
+      return version;
    }
 }
