@@ -1,5 +1,6 @@
 package us.ihmc.tMotorCore;
 
+import us.ihmc.robotics.math.filters.GlitchFilteredYoBoolean;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
@@ -8,15 +9,15 @@ import us.ihmc.yoVariables.variable.YoInteger;
 public class TMotorOverTorqueProcessor
 {
    private static final double TORQUE_THRESHOLD_NEAR_MAX = 0.3;
-   private static final double MIN_TORQUE_OFFSET_TIME = 1.0;
+   private static final int GLITCH_FILTER_WINDOW_SIZE = 15;
 
-   private final YoDouble yoTime;
-   private double previousOffsetUpdateTime;
+   private boolean firstTick = true;
    private final YoInteger torqueOffset;
+   private final GlitchFilteredYoBoolean overTorqueDetected;
    private final double nominalTorqueLimit;
    private final DoubleProvider torqueScale;
    private final DoubleProvider measuredTorque;
-   private double previousRawMeasuredTorque;
+   private double previousTrustedMeasuredTorque;
 
    public TMotorOverTorqueProcessor(String prefix,
                                     YoDouble yoTime,
@@ -25,43 +26,71 @@ public class TMotorOverTorqueProcessor
                                     DoubleProvider measuredTorque,
                                     YoRegistry registry)
    {
-      this.yoTime = yoTime;
       this.nominalTorqueLimit = nominalTorqueLimit;
       this.measuredTorque = measuredTorque;
       this.torqueScale = torqueScale;
       this.torqueOffset = new YoInteger(prefix + "TorqueOffset", registry);
+      this.overTorqueDetected = new GlitchFilteredYoBoolean(prefix + "OverTorqueDetected", registry, GLITCH_FILTER_WINDOW_SIZE);
    }
 
    public void initialize()
    {
       torqueOffset.set(0);
-      previousOffsetUpdateTime = Double.NEGATIVE_INFINITY;
-      previousRawMeasuredTorque = 0.0;
+      previousTrustedMeasuredTorque = measuredTorque.getValue();
+      overTorqueDetected.set(false);
    }
 
+   /**
+    * Returns torque that has been compensated for wrap-around
+    */
    public double updateTorqueOffset()
    {
-      if (yoTime.getValue() - previousOffsetUpdateTime > MIN_TORQUE_OFFSET_TIME)
-         updateInternal();
-      return 2.0 * torqueOffset.getValue() * nominalTorqueLimit * torqueScale.getValue();
+      if (firstTick)
+      {
+         initialize();
+         firstTick = true;
+      }
+
+      return updateInternal();
    }
 
-   private void updateInternal()
+   private double updateInternal()
    {
       double minMaxTorque = nominalTorqueLimit * torqueScale.getValue();
       double minMaxTorqueThreshold = (1.0 - TORQUE_THRESHOLD_NEAR_MAX) * minMaxTorque;
 
-      if (previousRawMeasuredTorque < -minMaxTorqueThreshold && measuredTorque.getValue() > minMaxTorqueThreshold)
+      boolean negativeWrapAround = previousTrustedMeasuredTorque < -minMaxTorqueThreshold && measuredTorque.getValue() > minMaxTorqueThreshold;
+      boolean positiveWrapAround = previousTrustedMeasuredTorque > minMaxTorqueThreshold && measuredTorque.getValue() < -minMaxTorqueThreshold;
+      overTorqueDetected.update(negativeWrapAround || positiveWrapAround);
+
+      if (overTorqueDetected.getValue())
       {
-         torqueOffset.set(Math.max(-1, torqueOffset.getValue() - 1));
-         previousOffsetUpdateTime = yoTime.getDoubleValue();
+         if (negativeWrapAround)
+         {
+            torqueOffset.set(Math.max(-1, torqueOffset.getValue() - 1));
+         }
+         if (positiveWrapAround)
+         {
+            torqueOffset.set(Math.min(1, torqueOffset.getValue() + 1));
+         }
+
+         overTorqueDetected.set(false);
+         previousTrustedMeasuredTorque = measuredTorque.getValue();
       }
-      else if (previousRawMeasuredTorque > minMaxTorqueThreshold && measuredTorque.getValue() < -minMaxTorqueThreshold)
+      else if (negativeWrapAround)
       {
-         torqueOffset.set(Math.min(1, torqueOffset.getValue() + 1));
-         previousOffsetUpdateTime = yoTime.getDoubleValue();
+         return -minMaxTorque;
+      }
+      else if (positiveWrapAround)
+      {
+         return minMaxTorque;
       }
 
-      previousRawMeasuredTorque = measuredTorque.getValue();
+      if (Math.abs(measuredTorque.getValue() - previousTrustedMeasuredTorque) < 0.5 * minMaxTorque)
+      {
+         previousTrustedMeasuredTorque = measuredTorque.getValue();
+      }
+
+      return 2.0 * torqueOffset.getValue() * nominalTorqueLimit * torqueScale.getValue();
    }
 }
