@@ -14,6 +14,8 @@ import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoInteger;
 
+import java.util.function.BooleanSupplier;
+
 /**
  * This class helps control a TMotor using the PCAN Can hardware and library This has been tested
  * using: https://www.peak-system.com/PCAN-PCI-Express.206.0.html?&L=1 The methods provide access to
@@ -328,5 +330,13 @@ public class TMotor
    public TMotorVersion getVersion()
    {
       return version;
+   }
+
+   public void setOverTorqueCompensationEnabled(BooleanSupplier enabled)
+   {
+      if (overTorqueProcessor != null)
+      {
+         overTorqueProcessor.setEnabled(enabled);
+      }
    }
 }

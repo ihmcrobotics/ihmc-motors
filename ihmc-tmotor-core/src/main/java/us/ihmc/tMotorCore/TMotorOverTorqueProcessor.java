@@ -6,6 +6,8 @@ import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoInteger;
 
+import java.util.function.BooleanSupplier;
+
 public class TMotorOverTorqueProcessor
 {
    private static final double TORQUE_THRESHOLD_NEAR_MAX = 0.3;
@@ -18,6 +20,7 @@ public class TMotorOverTorqueProcessor
    private final DoubleProvider torqueScale;
    private final DoubleProvider measuredTorque;
    private double previousTrustedMeasuredTorque;
+   private BooleanSupplier enabled = () -> true;
 
    public TMotorOverTorqueProcessor(String prefix,
                                     YoDouble yoTime,
@@ -45,6 +48,13 @@ public class TMotorOverTorqueProcessor
     */
    public double computeWrapAroundCompensatedTorque()
    {
+      if (!enabled.getAsBoolean())
+      {
+         // Assumes no wrap around after shaking is done. Could add more band-aids if these aren't enough
+         initialize();
+         return measuredTorque.getValue();
+      }
+
       if (firstTick)
       {
          initialize();
@@ -92,5 +102,10 @@ public class TMotorOverTorqueProcessor
       }
 
       return measuredTorque.getValue() + 2.0 * torqueOffset.getValue() * nominalTorqueLimit * torqueScale.getValue();
+   }
+
+   public void setEnabled(BooleanSupplier enabled)
+   {
+      this.enabled = enabled;
    }
 }
