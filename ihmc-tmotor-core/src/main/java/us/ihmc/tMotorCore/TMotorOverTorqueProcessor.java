@@ -43,18 +43,18 @@ public class TMotorOverTorqueProcessor
    /**
     * Returns torque that has been compensated for wrap-around
     */
-   public double updateTorqueOffset()
+   public double computeWrapAroundCompensatedTorque()
    {
       if (firstTick)
       {
          initialize();
-         firstTick = true;
+         firstTick = false;
       }
 
-      return updateInternal();
+      return computeInternal();
    }
 
-   private double updateInternal()
+   private double computeInternal()
    {
       double minMaxTorque = nominalTorqueLimit * torqueScale.getValue();
       double minMaxTorqueThreshold = (1.0 - TORQUE_THRESHOLD_NEAR_MAX) * minMaxTorque;
@@ -79,11 +79,11 @@ public class TMotorOverTorqueProcessor
       }
       else if (negativeWrapAround)
       {
-         return -minMaxTorque;
+         return -minMaxTorque + 2.0 * torqueOffset.getValue() * nominalTorqueLimit * torqueScale.getValue();
       }
       else if (positiveWrapAround)
       {
-         return minMaxTorque;
+         return minMaxTorque + 2.0 * torqueOffset.getValue() * nominalTorqueLimit * torqueScale.getValue();
       }
 
       if (Math.abs(measuredTorque.getValue() - previousTrustedMeasuredTorque) < 0.5 * minMaxTorque)
@@ -91,6 +91,6 @@ public class TMotorOverTorqueProcessor
          previousTrustedMeasuredTorque = measuredTorque.getValue();
       }
 
-      return 2.0 * torqueOffset.getValue() * nominalTorqueLimit * torqueScale.getValue();
+      return measuredTorque.getValue() + 2.0 * torqueOffset.getValue() * nominalTorqueLimit * torqueScale.getValue();
    }
 }

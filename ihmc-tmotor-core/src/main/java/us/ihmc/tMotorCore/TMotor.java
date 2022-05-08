@@ -186,7 +186,7 @@ public class TMotor
 
       if (overTorqueProcessor != null)
       {
-         measuredTorque.add(overTorqueProcessor.updateTorqueOffset());
+         measuredTorque.set(overTorqueProcessor.computeWrapAroundCompensatedTorque());
       }
 
       measuredVelocityFD.update();
