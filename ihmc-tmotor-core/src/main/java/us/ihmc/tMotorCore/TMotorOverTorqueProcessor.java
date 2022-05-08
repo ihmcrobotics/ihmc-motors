@@ -43,7 +43,7 @@ public class TMotorOverTorqueProcessor
    {
       if (yoTime.getValue() - previousOffsetUpdateTime > MIN_TORQUE_OFFSET_TIME)
          updateInternal();
-      return torqueOffset.getValue() * nominalTorqueLimit * torqueScale.getValue();
+      return 2.0 * torqueOffset.getValue() * nominalTorqueLimit * torqueScale.getValue();
    }
 
    private void updateInternal()
@@ -53,12 +53,12 @@ public class TMotorOverTorqueProcessor
 
       if (previousRawMeasuredTorque < -minMaxTorqueThreshold && measuredTorque.getValue() > minMaxTorqueThreshold)
       {
-         torqueOffset.set(Math.min(1, torqueOffset.getValue() + 1));
+         torqueOffset.set(Math.max(-1, torqueOffset.getValue() - 1));
          previousOffsetUpdateTime = yoTime.getDoubleValue();
       }
       else if (previousRawMeasuredTorque > minMaxTorqueThreshold && measuredTorque.getValue() < -minMaxTorqueThreshold)
       {
-         torqueOffset.set(Math.max(-1, torqueOffset.getValue() - 1));
+         torqueOffset.set(Math.min(1, torqueOffset.getValue() + 1));
          previousOffsetUpdateTime = yoTime.getDoubleValue();
       }
 
