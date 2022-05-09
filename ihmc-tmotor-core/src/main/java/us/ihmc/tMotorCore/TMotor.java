@@ -312,6 +312,11 @@ public class TMotor
       return ID;
    }
 
+   public String getMotorName()
+   {
+      return motorName;
+   }
+
    /**
     * After calling set, the returned message is ready to be sent over a PCAN Channel to a TMotor
     * 

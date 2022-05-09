@@ -164,4 +164,9 @@ public class TMotorLowLevelController
    {
       sendDisableMotorCommand.set(true);
    }
+
+   public TMotor getTMotor()
+   {
+      return tMotor;
+   }
 }
