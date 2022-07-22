@@ -52,7 +52,7 @@ public class TMotor
    private final YoDouble gearRatio;
    private final YoDouble kt;
 
-   // measureds
+   // Measured data
    private final YoDouble measuredPositionRaw;
    private final YoDouble measuredVelocityRaw;
    private final YoDouble measuredTorqueRaw;
@@ -63,10 +63,10 @@ public class TMotor
    private final YoDouble measuredCurrent;
 
    private final AlphaFilteredYoVariable measuredTorqueFiltered;
-   private final YoDouble measuredVelocityFDAlpha;
-   private final FilteredVelocityYoVariable measuredVelocityFD;
+   private final YoDouble measuredVelocityAlpha;
+   private final AlphaFilteredYoVariable measuredVelocityFiltered;
 
-   //desireds
+   // Desired setpoints
    private final YoInteger desiredPositionRaw;
    private final YoInteger desiredVelocityRaw;
    private final YoInteger desiredTorqueRaw;
@@ -79,7 +79,7 @@ public class TMotor
    private final YoDouble desiredKp;
    private final YoDouble desiredKd;
 
-   //temp model  (should move to own class when tested)
+   // Temperature model  (should move to own class when tested)
    private final YoDouble estimatedTemp;
 
    private TMotorTemperatureModel temperatureModel;
@@ -114,7 +114,7 @@ public class TMotor
       kt.set(motorParameters.getKt());
       outputAnglePerInputRevolution = 2.0 * Math.PI / motorParameters.getGearRatio();
 
-      //desireds
+      // Desireds setpoints
       desiredPositionRaw = new YoInteger(prefix + "desiredPositionRaw", registry);
       desiredVelocityRaw = new YoInteger(prefix + "desiredVelocityRaw", registry);
       desiredTorqueRaw = new YoInteger(prefix + "desiredTorqueRaw", registry);
@@ -127,7 +127,7 @@ public class TMotor
       desiredKp = new YoDouble(prefix + "desiredKp", registry);
       desiredKd = new YoDouble(prefix + "desiredKd", registry);
 
-      // measureds
+      // Measured data
       measuredPositionRaw = new YoDouble(prefix + "measuredPositionRaw", registry);
       measuredVelocityRaw = new YoDouble(prefix + "measuredVelocityRaw", registry);
       measuredTorqueRaw = new YoDouble(prefix + "measuredTorqueRaw", registry);
@@ -138,9 +138,9 @@ public class TMotor
       measuredCurrent = new YoDouble(prefix + "measuredCurrent", registry);
 
       measuredTorqueFiltered = new AlphaFilteredYoVariable(prefix + "measuredTorqueFilt", registry, 0.9, measuredTorque);
-      measuredVelocityFDAlpha = new YoDouble(prefix + "measuredVelocityFDAlpha", registry);
-      measuredVelocityFD = new FilteredVelocityYoVariable(prefix + "measuredVelocityFilt", null, measuredVelocityFDAlpha, measuredPosition, dt, registry);
-      measuredVelocityFDAlpha.set(0.95);
+      measuredVelocityAlpha = new YoDouble(prefix + "measuredVelocityAlpha", registry);
+      measuredVelocityFiltered = new AlphaFilteredYoVariable(prefix + "measuredVelocityFilt", registry, measuredVelocityAlpha, measuredVelocity);
+      measuredVelocityAlpha.set(0.7);
 
       estimatedTemp = new YoDouble(prefix + "estimatedTemperature", registry);
 
@@ -169,7 +169,7 @@ public class TMotor
       measuredTorque.set(motorDirection.getValue() * motorReply.getMeasuredTorque() * torqueScale);
       measuredCurrent.set(measuredTorque.getDoubleValue() / gearRatio.getDoubleValue() / kt.getDoubleValue());
 
-      measuredVelocityFD.update();
+      measuredVelocityFiltered.update();
       measuredTorqueFiltered.update();
 
       temperatureModel.update(dt);
@@ -247,7 +247,7 @@ public class TMotor
 
    public double getFilteredVelocity()
    {
-      return measuredVelocityFD.getValue();
+      return measuredVelocityFiltered.getValue();
    }
 
    public double getTorque()
