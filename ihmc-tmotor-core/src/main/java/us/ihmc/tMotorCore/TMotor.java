@@ -2,10 +2,10 @@ package us.ihmc.tMotorCore;
 
 import peak.can.basic.TPCANMsg;
 import us.ihmc.CAN.YoCANMsg;
-import us.ihmc.commons.MathTools;
 import us.ihmc.euclid.tools.EuclidCoreTools;
 import us.ihmc.robotics.math.filters.AlphaFilteredYoVariable;
 import us.ihmc.robotics.math.filters.FilteredVelocityYoVariable;
+import us.ihmc.robotics.math.filters.RateLimitedYoVariable;
 import us.ihmc.tMotorCore.CANMessages.TMotorCommand;
 import us.ihmc.tMotorCore.CANMessages.TMotorReply;
 import us.ihmc.tMotorCore.parameters.TMotorParameters;
@@ -35,7 +35,8 @@ public class TMotor
     * joint position might be off by a factor of 2*pi/gearRatio if it boots in the wrong sector. So
     * this can be used to re-zero the joint online.
     */
-   private final YoInteger offsetInterval;
+   private final YoInteger offsetIntervalRequested;
+   private final RateLimitedYoVariable offsetIntervalRateLimited;
    private final double outputAnglePerInputRevolution;
    private final YoInteger motorDirection;
 
@@ -105,7 +106,8 @@ public class TMotor
       gearRatio = new YoDouble(prefix + "gearRatio", registry);
       torqueScale = new YoDouble(prefix + "torqueScale", registry);
       kt = new YoDouble(prefix + "kt", registry);
-      offsetInterval = new YoInteger(prefix + "offsetInterval", registry);
+      offsetIntervalRequested = new YoInteger(prefix + "offsetInterval", registry);
+      offsetIntervalRateLimited = new RateLimitedYoVariable(prefix + "offsetIntervalRateLimited", registry, 1.0,  0.1);
       motorDirection = new YoInteger(prefix + "motorDirection", registry);
 
       motorDirection.set(1);
@@ -164,7 +166,7 @@ public class TMotor
       measuredTorqueRaw.set(motorReply.getMeasuredTorqueRaw());
 
       double torqueScale = EuclidCoreTools.clamp(this.torqueScale.getValue(), minTorqueScale, maxTorqueScale);
-      measuredPosition.set(motorDirection.getValue() * motorReply.getMeasuredPosition() + offsetInterval.getValue() * outputAnglePerInputRevolution);
+      measuredPosition.set(motorDirection.getValue() * motorReply.getMeasuredPosition() + offsetIntervalRateLimited.getDoubleValue() * outputAnglePerInputRevolution);
       measuredVelocity.set(motorDirection.getValue() * motorReply.getMeasuredVelocity());
       measuredTorque.set(motorDirection.getValue() * motorReply.getMeasuredTorque() * torqueScale);
       measuredCurrent.set(measuredTorque.getDoubleValue() / gearRatio.getDoubleValue() / kt.getDoubleValue());
@@ -182,7 +184,7 @@ public class TMotor
    public void setCommand(double kp, double kd, double desiredPosition, double desiredVelocity, double desiredTorque)
    {
       double torqueScale = EuclidCoreTools.clamp(this.torqueScale.getValue(), minTorqueScale, maxTorqueScale);
-      double adjustedDesiredPosition = motorDirection.getValue() * (desiredPosition - offsetInterval.getValue() * outputAnglePerInputRevolution);
+      double adjustedDesiredPosition = motorDirection.getValue() * (desiredPosition - offsetIntervalRequested.getValue() * outputAnglePerInputRevolution);
       double adjustedDesiredVelocity = motorDirection.getValue() * desiredVelocity;
       double adjustedDesiredTorque = motorDirection.getValue() * desiredTorque / torqueScale;
 
@@ -275,9 +277,10 @@ public class TMotor
       this.torqueScale.set(torqueScaling);
    }
 
-   public void setOffsetInterval(int offsetInterval)
+   public void setOffsetInterval(int offsetIntervalRequested)
    {
-      this.offsetInterval.set(offsetInterval);
+      this.offsetIntervalRequested.set(offsetIntervalRequested);
+      this.offsetIntervalRateLimited.set(offsetIntervalRequested);
    }
 
    public int getID()
