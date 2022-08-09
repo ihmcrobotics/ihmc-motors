@@ -106,7 +106,7 @@ public class TMotor
       gearRatio = new YoDouble(prefix + "gearRatio", registry);
       torqueScale = new YoDouble(prefix + "torqueScale", registry);
       kt = new YoDouble(prefix + "kt", registry);
-      offsetIntervalRequested = new YoInteger(prefix + "offsetInterval", registry);
+      offsetIntervalRequested = new YoInteger(prefix + "offsetIntervalRequested", registry);
       offsetIntervalRateLimited = new RateLimitedYoVariable(prefix + "offsetIntervalRateLimited", registry, 1.0,  0.1);
       motorDirection = new YoInteger(prefix + "motorDirection", registry);
 
@@ -173,6 +173,7 @@ public class TMotor
 
       measuredVelocityFiltered.update();
       measuredTorqueFiltered.update();
+      offsetIntervalRateLimited.update(offsetIntervalRequested.getValue());
 
       temperatureModel.update(dt);
       estimatedTemp.set(temperatureModel.getTemperature());
@@ -280,7 +281,6 @@ public class TMotor
    public void setOffsetInterval(int offsetIntervalRequested)
    {
       this.offsetIntervalRequested.set(offsetIntervalRequested);
-      this.offsetIntervalRateLimited.set(offsetIntervalRequested);
    }
 
    public int getID()
