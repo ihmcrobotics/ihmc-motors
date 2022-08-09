@@ -109,13 +109,15 @@ public class TMotor
       registry = new YoRegistry(prefix + name);
       yoCANMsg = new YoCANMsg(motorName, registry);
 
-      if(maxRateVariable == null) { maxRateVariable = new YoDouble(prefix + "maxRateVariable", registry); }
       //parameters
       gearRatio = new YoDouble(prefix + "gearRatio", registry);
       torqueScale = new YoDouble(prefix + "torqueScale", registry);
       kt = new YoDouble(prefix + "kt", registry);
       offsetIntervalRequested = new YoInteger(prefix + "offsetIntervalRequested", registry);
-      offsetIntervalRateLimited = new RateLimitedYoVariable(prefix + "offsetIntervalRateLimited", registry, maxRateVariable,  dt);
+      if(offsetIntervalRateLimit == null)
+         offsetIntervalRateLimited = new RateLimitedYoVariable(prefix + "offsetIntervalRateLimited", registry, 0.3,  dt);
+      else
+         offsetIntervalRateLimited = new RateLimitedYoVariable(prefix + "offsetIntervalRateLimited", registry, offsetIntervalRateLimit,  dt);
       motorDirection = new YoInteger(prefix + "motorDirection", registry);
 
       motorDirection.set(1);
