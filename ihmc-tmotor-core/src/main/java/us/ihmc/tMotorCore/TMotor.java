@@ -10,6 +10,8 @@ import us.ihmc.tMotorCore.CANMessages.TMotorCommand;
 import us.ihmc.tMotorCore.CANMessages.TMotorReply;
 import us.ihmc.tMotorCore.parameters.TMotorParameters;
 import us.ihmc.temperatureModel.CurrentProvider;
+import us.ihmc.yoVariables.parameters.DoubleParameter;
+import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoInteger;
@@ -37,6 +39,7 @@ public class TMotor
     */
    private final YoInteger offsetIntervalRequested;
    private final RateLimitedYoVariable offsetIntervalRateLimited;
+   private YoDouble maxRateVariable;
    private final double outputAnglePerInputRevolution;
    private final YoInteger motorDirection;
 
@@ -101,13 +104,14 @@ public class TMotor
 
       registry = new YoRegistry(prefix + name);
       yoCANMsg = new YoCANMsg(motorName, registry);
+
       
       //parameters
       gearRatio = new YoDouble(prefix + "gearRatio", registry);
       torqueScale = new YoDouble(prefix + "torqueScale", registry);
       kt = new YoDouble(prefix + "kt", registry);
       offsetIntervalRequested = new YoInteger(prefix + "offsetIntervalRequested", registry);
-      offsetIntervalRateLimited = new RateLimitedYoVariable(prefix + "offsetIntervalRateLimited", registry, 1.0,  dt);
+      offsetIntervalRateLimited = new RateLimitedYoVariable(prefix + "offsetIntervalRateLimited", registry, maxRateVariable,  dt);
       motorDirection = new YoInteger(prefix + "motorDirection", registry);
 
       motorDirection.set(1);
@@ -150,6 +154,11 @@ public class TMotor
       temperatureModel = new TMotorTemperatureModel(prefix, motorParameters, currentProvider, registry);
 
       parentRegistry.addChild(registry);
+   }
+   
+   public TMotor(int id, String name, TMotorVersion version, double dt, YoDouble offsetIntervalRateLimit, YoRegistry parentRegistry){
+      this(id, name, version, dt, parentRegistry);
+      maxRateVariable = offsetIntervalRateLimit;
    }
 
    /**
