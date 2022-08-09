@@ -92,6 +92,10 @@ public class TMotor
 
    public TMotor(int id, String name, TMotorVersion version, double dt, YoRegistry parentRegistry)
    {
+      this(id, name, version, dt, null, parentRegistry);
+   }
+   
+   public TMotor(int id, String name, TMotorVersion version, double dt, YoDouble offsetIntervalRateLimit, YoRegistry parentRegistry){
       this.ID = id;
       this.motorName = name;
       this.dt = dt;
@@ -105,7 +109,7 @@ public class TMotor
       registry = new YoRegistry(prefix + name);
       yoCANMsg = new YoCANMsg(motorName, registry);
 
-      
+      if(maxRateVariable == null) { maxRateVariable = new YoDouble(prefix + "maxRateVariable", registry); }
       //parameters
       gearRatio = new YoDouble(prefix + "gearRatio", registry);
       torqueScale = new YoDouble(prefix + "torqueScale", registry);
@@ -154,11 +158,6 @@ public class TMotor
       temperatureModel = new TMotorTemperatureModel(prefix, motorParameters, currentProvider, registry);
 
       parentRegistry.addChild(registry);
-   }
-   
-   public TMotor(int id, String name, TMotorVersion version, double dt, YoDouble offsetIntervalRateLimit, YoRegistry parentRegistry){
-      this(id, name, version, dt, parentRegistry);
-      maxRateVariable = offsetIntervalRateLimit;
    }
 
    /**
