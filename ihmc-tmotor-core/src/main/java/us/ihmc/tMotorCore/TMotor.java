@@ -107,7 +107,7 @@ public class TMotor
       torqueScale = new YoDouble(prefix + "torqueScale", registry);
       kt = new YoDouble(prefix + "kt", registry);
       offsetIntervalRequested = new YoInteger(prefix + "offsetIntervalRequested", registry);
-      offsetIntervalRateLimited = new RateLimitedYoVariable(prefix + "offsetIntervalRateLimited", registry, 1.0,  0.1);
+      offsetIntervalRateLimited = new RateLimitedYoVariable(prefix + "offsetIntervalRateLimited", registry, 1.0,  dt);
       motorDirection = new YoInteger(prefix + "motorDirection", registry);
 
       motorDirection.set(1);
