@@ -161,6 +161,8 @@ public class TMotor
       yoCANMsg.setReceived(message);
       motorReply.parseAndUnpack(message);
 
+      offsetIntervalRateLimited.update(offsetIntervalRequested.getValue());
+
       measuredPositionRaw.set(motorReply.getMeasuredPositionRaw());
       measuredVelocityRaw.set(motorReply.getMeasuredVelocityRaw());
       measuredTorqueRaw.set(motorReply.getMeasuredTorqueRaw());
@@ -173,7 +175,6 @@ public class TMotor
 
       measuredVelocityFiltered.update();
       measuredTorqueFiltered.update();
-      offsetIntervalRateLimited.update(offsetIntervalRequested.getValue());
 
       temperatureModel.update(dt);
       estimatedTemp.set(temperatureModel.getTemperature());
@@ -185,7 +186,7 @@ public class TMotor
    public void setCommand(double kp, double kd, double desiredPosition, double desiredVelocity, double desiredTorque)
    {
       double torqueScale = EuclidCoreTools.clamp(this.torqueScale.getValue(), minTorqueScale, maxTorqueScale);
-      double adjustedDesiredPosition = motorDirection.getValue() * (desiredPosition - offsetIntervalRequested.getValue() * outputAnglePerInputRevolution);
+      double adjustedDesiredPosition = motorDirection.getValue() * (desiredPosition - offsetIntervalRateLimited.getDoubleValue() * outputAnglePerInputRevolution);
       double adjustedDesiredVelocity = motorDirection.getValue() * desiredVelocity;
       double adjustedDesiredTorque = motorDirection.getValue() * desiredTorque / torqueScale;
 
