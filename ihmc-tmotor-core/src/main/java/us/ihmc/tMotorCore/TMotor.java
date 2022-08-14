@@ -39,7 +39,6 @@ public class TMotor
     */
    private final YoInteger offsetIntervalRequested;
    private final RateLimitedYoVariable offsetIntervalRateLimited;
-   private YoDouble maxRateVariable;
    private final double outputAnglePerInputRevolution;
    private final YoInteger motorDirection;
 
@@ -95,7 +94,8 @@ public class TMotor
       this(id, name, version, dt, null, parentRegistry);
    }
    
-   public TMotor(int id, String name, TMotorVersion version, double dt, YoDouble offsetIntervalRateLimit, YoRegistry parentRegistry){
+   public TMotor(int id, String name, TMotorVersion version, double dt, YoDouble offsetIntervalRateLimit, YoRegistry parentRegistry)
+   {
       this.ID = id;
       this.motorName = name;
       this.dt = dt;
@@ -113,7 +113,7 @@ public class TMotor
       gearRatio = new YoDouble(prefix + "gearRatio", registry);
       torqueScale = new YoDouble(prefix + "torqueScale", registry);
       kt = new YoDouble(prefix + "kt", registry);
-      offsetIntervalRequested = new YoInteger(prefix + "offsetIntervalRequested", registry);
+      offsetIntervalRequested = new YoInteger(prefix + "offsetInterval", registry);
       if(offsetIntervalRateLimit == null)
          offsetIntervalRateLimited = new RateLimitedYoVariable(prefix + "offsetIntervalRateLimited", registry, 0.3,  dt);
       else
@@ -244,6 +244,11 @@ public class TMotor
       yoCANMsg.setSent(motorCommand.getCANMsg());
    }
 
+   public String getMotorName()
+   {
+      return motorName;
+   }
+
    public void reversePositiveMotorDirection()
    {
       motorDirection.set(-1);
@@ -297,6 +302,11 @@ public class TMotor
    public int getID()
    {
       return ID;
+   }
+
+   public double getOutputAnglePerInputRevolution()
+   {
+      return outputAnglePerInputRevolution;
    }
 
    /**
