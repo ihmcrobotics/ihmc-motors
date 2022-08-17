@@ -299,6 +299,11 @@ public class TMotor
       this.offsetIntervalRequested.set(offsetIntervalRequested);
    }
 
+   public int getOffsetInterval()
+   {
+      return offsetIntervalRequested.getValue();
+   }
+
    public int getID()
    {
       return ID;
