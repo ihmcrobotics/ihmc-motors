@@ -328,4 +328,9 @@ public class TMotor
    {
       return this.measuredCurrent.getDoubleValue();
    }
+
+   public YoInteger getOffsetIntervalRequested()
+   {
+      return offsetIntervalRequested;
+   }
 }
