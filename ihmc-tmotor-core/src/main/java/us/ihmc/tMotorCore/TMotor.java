@@ -23,7 +23,9 @@ import us.ihmc.yoVariables.variable.YoInteger;
  */
 public class TMotor
 {
+   public static boolean ENABLE_DEBUG_VARIABLES = false;
    private final YoRegistry registry;
+   private final YoRegistry debugRegistry;
 
    // PCAN fields
    private final int ID;
@@ -107,7 +109,8 @@ public class TMotor
       motorReply = new TMotorReply(motorParameters);
 
       registry = new YoRegistry(prefix + name);
-      yoCANMsg = new YoCANMsg(motorName, registry);
+      debugRegistry = new YoRegistry(prefix + name + "Debug");
+      yoCANMsg = new YoCANMsg(motorName, debugRegistry);
 
       //parameters
       gearRatio = new YoDouble(prefix + "gearRatio", registry);
@@ -127,11 +130,11 @@ public class TMotor
       outputAnglePerInputRevolution = 2.0 * Math.PI / motorParameters.getGearRatio();
 
       // Desireds setpoints
-      desiredPositionRaw = new YoInteger(prefix + "desiredPositionRaw", registry);
-      desiredVelocityRaw = new YoInteger(prefix + "desiredVelocityRaw", registry);
-      desiredTorqueRaw = new YoInteger(prefix + "desiredTorqueRaw", registry);
-      desiredKpRaw = new YoInteger(prefix + "desiredKpRaw", registry);
-      desiredKdRaw = new YoInteger(prefix + "desiredKdRaw", registry);
+      desiredPositionRaw = new YoInteger(prefix + "desiredPositionRaw", debugRegistry);
+      desiredVelocityRaw = new YoInteger(prefix + "desiredVelocityRaw", debugRegistry);
+      desiredTorqueRaw = new YoInteger(prefix + "desiredTorqueRaw", debugRegistry);
+      desiredKpRaw = new YoInteger(prefix + "desiredKpRaw", debugRegistry);
+      desiredKdRaw = new YoInteger(prefix + "desiredKdRaw", debugRegistry);
 
       desiredPosition = new YoDouble(prefix + "desiredActuatorPosition", registry);
       desiredVelocity = new YoDouble(prefix + "desiredVelocity", registry);
@@ -140,25 +143,29 @@ public class TMotor
       desiredKd = new YoDouble(prefix + "desiredKd", registry);
 
       // Measured data
-      measuredPositionRaw = new YoDouble(prefix + "measuredPositionRaw", registry);
-      measuredVelocityRaw = new YoDouble(prefix + "measuredVelocityRaw", registry);
-      measuredTorqueRaw = new YoDouble(prefix + "measuredTorqueRaw", registry);
+      measuredPositionRaw = new YoDouble(prefix + "measuredPositionRaw", debugRegistry);
+      measuredVelocityRaw = new YoDouble(prefix + "measuredVelocityRaw", debugRegistry);
+      measuredTorqueRaw = new YoDouble(prefix + "measuredTorqueRaw", debugRegistry);
 
       measuredPosition = new YoDouble(prefix + "measuredActuatorPosition", registry);
       measuredVelocity = new YoDouble(prefix + "measuredVelocity", registry);
       measuredTorque = new YoDouble(prefix + "measuredTorque", registry);
       measuredCurrent = new YoDouble(prefix + "measuredCurrent", registry);
 
-      measuredTorqueFiltered = new AlphaFilteredYoVariable(prefix + "measuredTorqueFilt", registry, 0.9, measuredTorque);
-      measuredVelocityAlpha = new YoDouble(prefix + "measuredVelocityAlpha", registry);
+      measuredTorqueFiltered = new AlphaFilteredYoVariable(prefix + "measuredTorqueFilt", debugRegistry, 0.9, measuredTorque);
+      measuredVelocityAlpha = new YoDouble(prefix + "measuredVelocityAlpha", debugRegistry);
       measuredVelocityFiltered = new AlphaFilteredYoVariable(prefix + "measuredVelocityFilt", registry, measuredVelocityAlpha, measuredVelocity);
       measuredVelocityAlpha.set(0.7);
 
       estimatedTemp = new YoDouble(prefix + "estimatedTemperature", registry);
 
       CurrentProvider currentProvider = () -> this.getCurrent();
-      temperatureModel = new TMotorTemperatureModel(prefix, motorParameters, currentProvider, registry);
+      temperatureModel = new TMotorTemperatureModel(prefix, motorParameters, currentProvider, debugRegistry);
 
+      if(ENABLE_DEBUG_VARIABLES)
+      {
+         registry.addChild(debugRegistry);
+      }
       parentRegistry.addChild(registry);
    }
 
