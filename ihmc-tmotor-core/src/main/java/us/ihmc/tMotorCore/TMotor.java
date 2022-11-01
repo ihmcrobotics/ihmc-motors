@@ -11,10 +11,13 @@ import us.ihmc.tMotorCore.CANMessages.TMotorReply;
 import us.ihmc.tMotorCore.parameters.TMotorParameters;
 import us.ihmc.temperatureModel.CurrentProvider;
 import us.ihmc.yoVariables.parameters.DoubleParameter;
+import us.ihmc.yoVariables.providers.BooleanProvider;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoInteger;
+
+import java.util.function.BooleanSupplier;
 
 /**
  * This class helps control a TMotor using the PCAN Can hardware and library This has been tested
@@ -33,6 +36,7 @@ public class TMotor
    private final TMotorCommand motorCommand; // CAN message sent to motor
    private final TMotorReply motorReply; // CAN message reply from motor
    private final YoCANMsg yoCANMsg;
+   private final TMotorVersion version;
 
    /**
     * The encoder is on the input side, and is clipped to (-pi,pi) on boot. So on the output side, the
@@ -88,19 +92,21 @@ public class TMotor
    private final YoDouble estimatedTemp;
 
    private TMotorTemperatureModel temperatureModel;
+   private final TMotorOverTorqueProcessor overTorqueProcessor;
 
    private double dt;
 
    public TMotor(int id, String name, TMotorVersion version, double dt, YoRegistry parentRegistry)
    {
-      this(id, name, version, dt, null, parentRegistry);
+      this(id, name, version, dt, null, false, null, parentRegistry);
    }
    
-   public TMotor(int id, String name, TMotorVersion version, double dt, YoDouble offsetIntervalRateLimit, YoRegistry parentRegistry)
+   public TMotor(int id, String name, TMotorVersion version, double dt, YoDouble offsetIntervalRateLimit, boolean useTorqueProcessor, YoDouble yoTime, YoRegistry parentRegistry)
    {
       this.ID = id;
       this.motorName = name;
       this.dt = dt;
+      this.version = version;
       String prefix = motorName + "_";
 
       TMotorParameters motorParameters = version.getMotorParameters();
@@ -159,8 +165,17 @@ public class TMotor
 
       estimatedTemp = new YoDouble(prefix + "estimatedTemperature", registry);
 
-      CurrentProvider currentProvider = () -> this.getCurrent();
+      CurrentProvider currentProvider = this::getCurrent;
       temperatureModel = new TMotorTemperatureModel(prefix, motorParameters, currentProvider, debugRegistry);
+
+      if (useTorqueProcessor && yoTime != null)
+      {
+         overTorqueProcessor = new TMotorOverTorqueProcessor(prefix, yoTime, version.getMotorParameters().getTorqueLimitUpper(), torqueScale, measuredTorque, registry);
+      }
+      else
+      {
+         overTorqueProcessor = null;
+      }
 
       if(ENABLE_DEBUG_VARIABLES)
       {
@@ -189,6 +204,11 @@ public class TMotor
       measuredVelocity.set(motorDirection.getValue() * motorReply.getMeasuredVelocity());
       measuredTorque.set(motorDirection.getValue() * motorReply.getMeasuredTorque() * torqueScale);
       measuredCurrent.set(measuredTorque.getDoubleValue() / gearRatio.getDoubleValue() / kt.getDoubleValue());
+
+      if (overTorqueProcessor != null)
+      {
+         measuredTorque.set(overTorqueProcessor.computeWrapAroundCompensatedTorque());
+      }
 
       measuredVelocityFiltered.update();
       measuredTorqueFiltered.update();
@@ -339,5 +359,13 @@ public class TMotor
    public YoInteger getOffsetIntervalRequested()
    {
       return offsetIntervalRequested;
+   }
+
+   public void setOverTorqueCompensationEnabled(BooleanSupplier enabled)
+   {
+      if (overTorqueProcessor != null)
+      {
+         overTorqueProcessor.setEnabled(enabled);
+      }
    }
 }
