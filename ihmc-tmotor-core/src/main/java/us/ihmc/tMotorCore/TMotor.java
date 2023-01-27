@@ -26,7 +26,7 @@ import java.util.function.BooleanSupplier;
  */
 public class TMotor
 {
-   public static boolean ENABLE_DEBUG_VARIABLES = false;
+   public static boolean ENABLE_DEBUG_VARIABLES = true;
    private final YoRegistry registry;
    private final YoRegistry debugRegistry;
 
