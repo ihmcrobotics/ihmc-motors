@@ -14,12 +14,17 @@ public class TMotorPositionJumpDetector
    private final YoDouble lastPositionBeforeJump;
    private final DoubleProvider positionProvider;
 
+   private final YoDouble positionChange;
+
    public TMotorPositionJumpDetector(String prefix, DoubleProvider positionProvider, YoRegistry registry)
    {
       positionJumpHasOccurred  = new YoBoolean(prefix + "ActuatorPositionJumpHasOccurred", registry);
 
       lastPositionBeforeJump = new YoDouble(prefix + "LastActuatorPositionBeforeJump", registry);
       this.positionProvider = positionProvider;
+      positionJumpHasOccurred.set(false);
+
+      positionChange = new YoDouble(prefix + "DEBUG_positionChange", registry);
    }
 
    public void update()
@@ -35,6 +40,8 @@ public class TMotorPositionJumpDetector
       {
          lastPositionBeforeJump.set(currentPosition);
       }
+
+      positionChange.set(positionChangeThisTick);
 
    }
 
