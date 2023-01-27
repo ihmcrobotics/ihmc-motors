@@ -94,6 +94,9 @@ public class TMotor
    private TMotorTemperatureModel temperatureModel;
    private final TMotorOverTorqueProcessor overTorqueProcessor;
 
+   private final TmotorMotorOffDetector offDetector;
+   private final TMotorPositionJumpDetector positionJumpDetector;
+
    private double dt;
 
    public TMotor(int id, String name, TMotorVersion version, double dt, YoRegistry parentRegistry)
@@ -168,6 +171,24 @@ public class TMotor
       CurrentProvider currentProvider = this::getCurrent;
       temperatureModel = new TMotorTemperatureModel(prefix, motorParameters, currentProvider, debugRegistry);
 
+      positionJumpDetector = new TMotorPositionJumpDetector(prefix, new DoubleProvider()
+      {
+         @Override
+         public double getValue()
+         {
+            return measuredPosition.getDoubleValue();
+         }
+      }, registry);
+
+      offDetector = new TmotorMotorOffDetector(prefix, new DoubleProvider()
+      {
+         @Override
+         public double getValue()
+         {
+            return measuredTorque.getValue();
+         }
+      }, registry);
+
       if (useTorqueProcessor && yoTime != null)
       {
          overTorqueProcessor = new TMotorOverTorqueProcessor(prefix, yoTime, version.getMotorParameters().getTorqueLimitUpper(), torqueScale, measuredTorque, registry);
@@ -215,6 +236,8 @@ public class TMotor
 
       temperatureModel.update(dt);
       estimatedTemp.set(temperatureModel.getTemperature());
+      offDetector.update();
+      positionJumpDetector.update();
    }
 
    /**
