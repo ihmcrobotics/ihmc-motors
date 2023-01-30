@@ -8,17 +8,20 @@ import us.ihmc.yoVariables.variable.YoDouble;
 // detects the first position jump and holds the value before the jump until reset
 public class TMotorPositionJumpDetector
 {
-   // This assumes that each tick is 0.001 s
-   private final double qChangeThresholdForJump = 0.6; // rads/tick
+   // This assumes that each tick is 0.002 s (CAN is at 500 Hz)
+   private final double qChangeThresholdForJump = 0.4; // rads/tick
    private final YoBoolean positionJumpHasOccurred;
    private final YoDouble lastPositionBeforeJump;
    private final DoubleProvider positionProvider;
+   private final int ticksPerUpdate;
+   private int updateTick;
 
    private final YoDouble positionChange;
 
-   public TMotorPositionJumpDetector(String prefix, DoubleProvider positionProvider, YoRegistry registry)
+   public TMotorPositionJumpDetector(String prefix, DoubleProvider positionProvider, int ticksPerUpdate, YoRegistry registry)
    {
       positionJumpHasOccurred  = new YoBoolean(prefix + "ActuatorPositionJumpHasOccurred", registry);
+      this.ticksPerUpdate = ticksPerUpdate;
 
       lastPositionBeforeJump = new YoDouble(prefix + "LastActuatorPositionBeforeJump", registry);
       this.positionProvider = positionProvider;
@@ -29,20 +32,26 @@ public class TMotorPositionJumpDetector
 
    public void update()
    {
-      double currentPosition = positionProvider.getValue();
-      double positionChangeThisTick = Math.abs(currentPosition - lastPositionBeforeJump.getDoubleValue());
-      if (positionChangeThisTick > qChangeThresholdForJump)
+      if (updateTick == ticksPerUpdate)
       {
-         positionJumpHasOccurred.set(true);
+         double currentPosition = positionProvider.getValue();
+         double positionChangeThisTick = Math.abs(currentPosition - lastPositionBeforeJump.getDoubleValue());
+         if (positionChangeThisTick > qChangeThresholdForJump)
+         {
+            positionJumpHasOccurred.set(true);
+         }
+
+         if (!positionJumpHasOccurred.getBooleanValue())
+         {
+            lastPositionBeforeJump.set(currentPosition);
+         }
+
+         positionChange.set(positionChangeThisTick);
+
+         updateTick = 0;
       }
 
-      if (!positionJumpHasOccurred.getBooleanValue())
-      {
-         lastPositionBeforeJump.set(currentPosition);
-      }
-
-      positionChange.set(positionChangeThisTick);
-
+      updateTick += 1;
    }
 
    public boolean getPositionJumpHasOccurred()

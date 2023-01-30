@@ -30,6 +30,9 @@ public class TMotorLowLevelController
    private final YoDouble motorPositionKp;
    private final YoDouble motorVelocityKd;
 
+   private final TMotorBrownoutManager brownoutManager;
+   private final YoBoolean requestedMotorEnabled;
+
    public TMotorLowLevelController(String name, TMotor tMotor, YoRegistry parentRegistry)
    {
       this.tMotor = tMotor;
@@ -52,16 +55,30 @@ public class TMotorLowLevelController
       motorPositionKp = new YoDouble(name + "_motorPositionKp", registry);
       motorVelocityKd = new YoDouble(name + "_motorVelocityKd", registry);
 
+      requestedMotorEnabled = new YoBoolean(name + "RequestedMotorEnabled", registry);
+      requestedMotorEnabled.set(false);
+      brownoutManager = new TMotorBrownoutManager(name, tMotor, requestedMotorEnabled, registry);
+
+
       parentRegistry.addChild(registry);
    }
 
    public void read(TPCANMsg receivedMsg)
    {
       tMotor.read(receivedMsg);
+
    }
 
    public void doControl()
    {
+      brownoutManager.update();
+
+      // Detects if the motor browns out
+      if (brownoutManager.brownoutOccurred())
+      {
+         sendDisableMotorCommand();
+      }
+
       if (sendDisableMotorCommand.getBooleanValue())
       {
          tMotor.setCommandToDisableMotor();
@@ -72,6 +89,7 @@ public class TMotorLowLevelController
             sendDisableMotorCommand.set(false);
             resendDisableCounter.set(0);
          }
+         requestedMotorEnabled.set(false);
          return;
       }
       
@@ -85,6 +103,7 @@ public class TMotorLowLevelController
             sendEnableMotorCommand.set(false);
             resendEnableCounter.set(0);
          }
+         requestedMotorEnabled.set(true);
          
          return;
       }

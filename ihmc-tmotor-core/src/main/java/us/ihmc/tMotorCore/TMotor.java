@@ -14,6 +14,7 @@ import us.ihmc.yoVariables.parameters.DoubleParameter;
 import us.ihmc.yoVariables.providers.BooleanProvider;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoRegistry;
+import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoInteger;
 
@@ -26,6 +27,8 @@ import java.util.function.BooleanSupplier;
  */
 public class TMotor
 {
+   public static final int TICKS_PER_UPDATE = 2;
+
    public static boolean ENABLE_DEBUG_VARIABLES = false;
    private final YoRegistry registry;
    private final YoRegistry debugRegistry;
@@ -94,8 +97,7 @@ public class TMotor
    private TMotorTemperatureModel temperatureModel;
    private final TMotorOverTorqueProcessor overTorqueProcessor;
 
-   private final TmotorMotorOffDetector offDetector;
-   private final TMotorPositionJumpDetector positionJumpDetector;
+
 
    private double dt;
 
@@ -171,24 +173,6 @@ public class TMotor
       CurrentProvider currentProvider = this::getCurrent;
       temperatureModel = new TMotorTemperatureModel(prefix, motorParameters, currentProvider, debugRegistry);
 
-      positionJumpDetector = new TMotorPositionJumpDetector(prefix, new DoubleProvider()
-      {
-         @Override
-         public double getValue()
-         {
-            return measuredPosition.getDoubleValue();
-         }
-      }, registry);
-
-      offDetector = new TmotorMotorOffDetector(prefix, new DoubleProvider()
-      {
-         @Override
-         public double getValue()
-         {
-            return measuredTorque.getValue();
-         }
-      }, registry);
-
       if (useTorqueProcessor && yoTime != null)
       {
          overTorqueProcessor = new TMotorOverTorqueProcessor(prefix, yoTime, version.getMotorParameters().getTorqueLimitUpper(), torqueScale, measuredTorque, registry);
@@ -236,8 +220,12 @@ public class TMotor
 
       temperatureModel.update(dt);
       estimatedTemp.set(temperatureModel.getTemperature());
-      offDetector.update();
-      positionJumpDetector.update();
+
+   }
+
+   public void updateMonitors()
+   {
+
    }
 
    /**
