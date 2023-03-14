@@ -21,7 +21,6 @@ mainDependencies {
    api("us.ihmc:ihmc-ethercat-master:0.12.0")
    api("us.ihmc:ihmc-robot-data-visualizer:source")
    api("us.ihmc:ihmc-robotics-toolkit:source")
-   api("us.ihmc:ihmc-common-walking-control-modules:source")   // TODO move to sensors build.gradle file
 }
 
 testDependencies {
