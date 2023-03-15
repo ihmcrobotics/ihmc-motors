@@ -19,8 +19,8 @@ ihmc {
 mainDependencies {
    api("us.ihmc:ihmc-realtime:1.5.1")
    api("us.ihmc:ihmc-ethercat-master:0.12.0")
-   api("us.ihmc:ihmc-robot-data-visualizer:source")
-   api("us.ihmc:ihmc-robotics-toolkit:source")
+   api("us.ihmc:ihmc-robot-data-visualizer:$version")
+   api("us.ihmc:ihmc-robotics-toolkit:$version")
 }
 
 testDependencies {
