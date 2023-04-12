@@ -41,6 +41,13 @@ public class CANTools
    {
       return message.getData()[0];
    }
+
+   public static void copyCanMessage(TPCANMsg destinationMessage, TPCANMsg sourceMessage)
+   {
+      destinationMessage.setData(sourceMessage.getData(), sourceMessage.getLength());
+      destinationMessage.setID(sourceMessage.getID());
+      destinationMessage.setType(sourceMessage.getType());
+   }
    
    public static void main(String[] args)
    {
@@ -58,4 +65,6 @@ public class CANTools
          }
       }
    }
+
+
 }
