@@ -31,6 +31,8 @@ public class GyemsMotorLowLevelController implements RobotController
    private final YoDouble motorTorqueKp;
    private double torqueError;
 
+   private final int CAN_SENT_BYTES = 8;
+
 
    public GyemsMotorLowLevelController(String name, GyemsMotor gyemsMotor, YoRegistry parentRegistry)
    {
@@ -66,7 +68,7 @@ public class GyemsMotorLowLevelController implements RobotController
       float desiredTorque = (float) desiredActuatorTorque.getDoubleValue();
 
       gyemsMotor.parseAndPack(desiredPosition, desiredVelocity, desiredTorque);
-      gyemsMotor.getYoCANMsg().setSent(gyemsMotor.getControlMotorMsg().getData());
+      gyemsMotor.getYoCANMsg().setSent(gyemsMotor.getControlMotorMsg().getData(), CAN_SENT_BYTES);
       gyemsMotor.setCommandedMsg(gyemsMotor.getControlMotorMsg());
    }
 
@@ -76,7 +78,7 @@ public class GyemsMotorLowLevelController implements RobotController
       {   //TODO see if this can be done along with the control command so that
          // we don't spend a whole tick just to change the PID gains
          gyemsMotor.setCommandedMsg(gyemsMotor.getUpdatedPIDGainsMsg());
-         gyemsMotor.getYoCANMsg().setSent(gyemsMotor.getUpdatedPIDGainsMsg().getData());
+         gyemsMotor.getYoCANMsg().setSent(gyemsMotor.getUpdatedPIDGainsMsg().getData(), CAN_SENT_BYTES);
          gyemsMotor.setRequestPIDGainsUpdate(false);
          return true;
       }
