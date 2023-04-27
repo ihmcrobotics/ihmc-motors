@@ -8,32 +8,17 @@ import us.ihmc.tMotorCore.parameters.TMotorParameters;
 
 public enum TMotorVersion
 {
-    AK606,
-    AK809,
-    AK109,
-    AK109v2;
+   AK606(new TMotorAK606Parameters()), AK809(new TMotorAK809Parameters()), AK109(new TMotorAK109Parameters()), AK109v2(new TMotorAK109V2Parameters());
 
-    private TMotorParameters tMotorParameters;
+   private final TMotorParameters tMotorParameters;
 
-    public TMotorParameters getMotorParameters()
-    {
-        switch (this)
-        {
-            case AK606:
-                tMotorParameters = new TMotorAK606Parameters();
-                return tMotorParameters;
-            case AK809:
-                tMotorParameters = new TMotorAK809Parameters();
-                return tMotorParameters;
-            case AK109:
-                tMotorParameters = new TMotorAK109Parameters();
-                return tMotorParameters;
-            case AK109v2:
-               tMotorParameters = new TMotorAK109V2Parameters();
-               return tMotorParameters;                
-            default:
-                throw new RuntimeException("T-Motor version: Parameters do not exist");
+   private TMotorVersion(TMotorParameters tMotorParameters)
+   {
+      this.tMotorParameters = tMotorParameters;
+   }
 
-        }
-    }
+   public TMotorParameters getMotorParameters()
+   {
+      return tMotorParameters;
+   }
 }

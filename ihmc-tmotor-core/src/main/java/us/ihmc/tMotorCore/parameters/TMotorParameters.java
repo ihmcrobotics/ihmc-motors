@@ -14,6 +14,12 @@ public interface TMotorParameters
 
    double getTorqueLimitUpper();
 
+   /**
+    * The rated peak torque for this version. Can be used to clamp the desired torque. Keep in mind
+    * that the motor cannot hold the peak torque.
+    */
+   double getPeakTorque();
+
    double getMaximumKp();
 
    double getMaximumKd();

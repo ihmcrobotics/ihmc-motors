@@ -1,23 +1,20 @@
 package us.ihmc.tMotorCore;
 
+import java.util.function.BooleanSupplier;
+
 import peak.can.basic.TPCANMsg;
 import us.ihmc.CAN.YoCANMsg;
+import us.ihmc.commons.MathTools;
 import us.ihmc.euclid.tools.EuclidCoreTools;
 import us.ihmc.robotics.math.filters.AlphaFilteredYoVariable;
-import us.ihmc.robotics.math.filters.FilteredVelocityYoVariable;
 import us.ihmc.robotics.math.filters.RateLimitedYoVariable;
 import us.ihmc.tMotorCore.CANMessages.TMotorCommand;
 import us.ihmc.tMotorCore.CANMessages.TMotorReply;
 import us.ihmc.tMotorCore.parameters.TMotorParameters;
 import us.ihmc.temperatureModel.CurrentProvider;
-import us.ihmc.yoVariables.parameters.DoubleParameter;
-import us.ihmc.yoVariables.providers.BooleanProvider;
-import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoInteger;
-
-import java.util.function.BooleanSupplier;
 
 /**
  * This class helps control a TMotor using the PCAN Can hardware and library This has been tested
@@ -27,6 +24,8 @@ import java.util.function.BooleanSupplier;
 public class TMotor
 {
    public static boolean ENABLE_DEBUG_VARIABLES = true;
+   public static boolean CLAMP_MAX_TORQUE = true;
+
    private final YoRegistry registry;
    private final YoRegistry debugRegistry;
 
@@ -222,6 +221,9 @@ public class TMotor
     */
    public void setCommand(double kp, double kd, double desiredPosition, double desiredVelocity, double desiredTorque)
    {
+      if (CLAMP_MAX_TORQUE)
+         desiredTorque = MathTools.clamp(desiredTorque, 0.90 * version.getMotorParameters().getPeakTorque());
+
       double torqueScale = EuclidCoreTools.clamp(this.torqueScale.getValue(), minTorqueScale, maxTorqueScale);
       double adjustedDesiredPosition = motorDirection.getValue() * (desiredPosition - offsetIntervalRateLimited.getDoubleValue() * outputAnglePerInputRevolution);
       double adjustedDesiredVelocity = motorDirection.getValue() * desiredVelocity;
