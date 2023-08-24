@@ -160,6 +160,17 @@ public class TMotorLowLevelController
       return tMotor.getTorque();
    }
 
+   public double getKp()
+   {
+      return motorPositionKp.getDoubleValue();
+   }
+
+   public double getKd()
+   {
+      return motorVelocityKd.getDoubleValue();
+   }
+
+
    public void sendEnableMotorCommand()
    {
       sendEnableMotorCommand.set(true);
