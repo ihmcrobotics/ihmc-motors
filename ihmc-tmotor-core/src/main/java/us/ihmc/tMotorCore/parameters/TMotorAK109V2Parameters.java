@@ -1,21 +1,18 @@
 package us.ihmc.tMotorCore.parameters;
 
-public class TMotorAK109Parameters implements TMotorParameters
+public class TMotorAK109V2Parameters implements TMotorParameters
 {
    private static final double MIN_POSITION = -12.5f;
    private static final double MAX_POSITION = 12.5f;
-   private static final double MIN_VELOCITY = -46.57f;  // -23.24 for 24V and -46.57 for 48 V
-   private static final double MAX_VELOCITY = 46.57f;   // 23.24 for 24V and 46.57 for 48 V
-   private static final double MIN_TORQUE = -16.0f;
-   private static final double MAX_TORQUE = 16.0f;
+   private static final double MIN_VELOCITY = -50.0f;
+   private static final double MAX_VELOCITY = 50.0f;
+   private static final double MIN_TORQUE = -65.0f;
+   private static final double MAX_TORQUE = 65.0f;
 
    private final static double MAXIMUM_KP = 500.0;
    private final static double MAXIMUM_KD = 100.0;
 
-   public double getPositionLimitLower()
-   {
-      return MIN_POSITION;
-   }
+   public double getPositionLimitLower() { return MIN_POSITION; }
 
    public double getPositionLimitUpper()
    {
@@ -52,17 +49,11 @@ public class TMotorAK109Parameters implements TMotorParameters
       return MAXIMUM_KD;
    }
 
-    @Override
-    public double getGearRatio()
-    {
-        return 9.0;
-    }
+   @Override
+   public double getGearRatio() { return 9.0; }
 
    @Override
-   public double getKt()
-   {
-      return 0.095;
-   }
+   public double getKt() { return 0.16; }
 
    @Override
    public double getCoilThermalMass()

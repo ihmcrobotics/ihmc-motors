@@ -13,11 +13,11 @@ import us.ihmc.tMotorCore.parameters.TMotorParameters;
 public class TMotorCommand
 {
    private static final byte STANDARD_CAN_MESSAGE = TPCANMessageType.PCAN_MESSAGE_STANDARD.getValue();
-   private static final int BITS_POSITION = 16;
-   private static final int BITS_VELOCITY = 12;
-   private static final int BITS_TORQUE = 12;
-   private static final int BITS_KP = 12;
-   private static final int BITS_KD = 12;
+   public static final int BITS_POSITION = 16;
+   public static final int BITS_VELOCITY = 12;
+   public static final int BITS_TORQUE = 12;
+   public static final int BITS_KP = 12;
+   public static final int BITS_KD = 12;
 
    private final byte[] enterMotorCommand = new byte[] {(byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFC};
    private final byte[] exitMotorCommand = new byte[] {(byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFD};
@@ -69,6 +69,11 @@ public class TMotorCommand
       userCommand[7] = (byte) (desiredTorqueRaw & 0xFF);
 
       pcanMsg.setData(userCommand, (byte) 8);
+   }
+   
+   public byte[] getUserCommand()
+   {
+      return userCommand;
    }
 
    public void setCommandToEnableMotor()

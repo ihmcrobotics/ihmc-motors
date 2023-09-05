@@ -21,12 +21,12 @@ public class TMotorLowLevelController
    private final YoLong resendDisableCounter;
    private final YoLong numberOfTimesToResendCommands;
 
-   //desireds
+   // Desireds
    private final YoDouble desiredActuatorPosition;
    private final YoDouble desiredActuatorVelocity;
    private final YoDouble desiredActuatorTorque;
 
-   // gains
+   // Gains
    private final YoDouble motorPositionKp;
    private final YoDouble motorVelocityKd;
 
@@ -150,10 +150,26 @@ public class TMotorLowLevelController
       return tMotor.getVelocity();
    }
 
+   public double getMeasuredVelocityFiltered()
+   {
+      return tMotor.getFilteredVelocity();
+   }
+
    public double getMeasuredTorque()
    {
       return tMotor.getTorque();
    }
+
+   public double getKp()
+   {
+      return motorPositionKp.getDoubleValue();
+   }
+
+   public double getKd()
+   {
+      return motorVelocityKd.getDoubleValue();
+   }
+
 
    public void sendEnableMotorCommand()
    {
@@ -163,5 +179,10 @@ public class TMotorLowLevelController
    public void sendDisableMotorCommand()
    {
       sendDisableMotorCommand.set(true);
+   }
+
+   public TMotor getTMotor()
+   {
+      return tMotor;
    }
 }

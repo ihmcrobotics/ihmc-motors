@@ -10,9 +10,9 @@ import us.ihmc.tMotorCore.parameters.TMotorParameters;
  */
 public class TMotorReply
 {
-   private static final int BITS_POSITION = 16;
-   private static final int BITS_VELOCITY = 12;
-   private static final int BITS_TORQUE = 12;
+   public static final int BITS_POSITION = 16;
+   public static final int BITS_VELOCITY = 12;
+   public static final int BITS_TORQUE = 12;
 
    private TMotorParameters motorParameters;
 

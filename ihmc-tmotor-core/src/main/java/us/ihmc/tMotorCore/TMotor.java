@@ -2,17 +2,22 @@ package us.ihmc.tMotorCore;
 
 import peak.can.basic.TPCANMsg;
 import us.ihmc.CAN.YoCANMsg;
-import us.ihmc.commons.MathTools;
 import us.ihmc.euclid.tools.EuclidCoreTools;
 import us.ihmc.robotics.math.filters.AlphaFilteredYoVariable;
 import us.ihmc.robotics.math.filters.FilteredVelocityYoVariable;
+import us.ihmc.robotics.math.filters.RateLimitedYoVariable;
 import us.ihmc.tMotorCore.CANMessages.TMotorCommand;
 import us.ihmc.tMotorCore.CANMessages.TMotorReply;
 import us.ihmc.tMotorCore.parameters.TMotorParameters;
 import us.ihmc.temperatureModel.CurrentProvider;
+import us.ihmc.yoVariables.parameters.DoubleParameter;
+import us.ihmc.yoVariables.providers.BooleanProvider;
+import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoInteger;
+
+import java.util.function.BooleanSupplier;
 
 /**
  * This class helps control a TMotor using the PCAN Can hardware and library This has been tested
@@ -21,7 +26,9 @@ import us.ihmc.yoVariables.variable.YoInteger;
  */
 public class TMotor
 {
+   public static boolean ENABLE_DEBUG_VARIABLES = true;
    private final YoRegistry registry;
+   private final YoRegistry debugRegistry;
 
    // PCAN fields
    private final int ID;
@@ -29,13 +36,15 @@ public class TMotor
    private final TMotorCommand motorCommand; // CAN message sent to motor
    private final TMotorReply motorReply; // CAN message reply from motor
    private final YoCANMsg yoCANMsg;
+   private final TMotorVersion version;
 
    /**
     * The encoder is on the input side, and is clipped to (-pi,pi) on boot. So on the output side, the
     * joint position might be off by a factor of 2*pi/gearRatio if it boots in the wrong sector. So
     * this can be used to re-zero the joint online.
     */
-   private final YoInteger offsetInterval;
+   private final YoInteger offsetIntervalRequested;
+   private final RateLimitedYoVariable offsetIntervalRateLimited;
    private final double outputAnglePerInputRevolution;
    private final YoInteger motorDirection;
 
@@ -52,7 +61,7 @@ public class TMotor
    private final YoDouble gearRatio;
    private final YoDouble kt;
 
-   // measureds
+   // Measured data
    private final YoDouble measuredPositionRaw;
    private final YoDouble measuredVelocityRaw;
    private final YoDouble measuredTorqueRaw;
@@ -63,10 +72,10 @@ public class TMotor
    private final YoDouble measuredCurrent;
 
    private final AlphaFilteredYoVariable measuredTorqueFiltered;
-   private final YoDouble measuredVelocityFDAlpha;
-   private final FilteredVelocityYoVariable measuredVelocityFD;
+   private final YoDouble measuredVelocityAlpha;
+   private final AlphaFilteredYoVariable measuredVelocityFiltered;
 
-   //desireds
+   // Desired setpoints
    private final YoInteger desiredPositionRaw;
    private final YoInteger desiredVelocityRaw;
    private final YoInteger desiredTorqueRaw;
@@ -79,18 +88,25 @@ public class TMotor
    private final YoDouble desiredKp;
    private final YoDouble desiredKd;
 
-   //temp model  (should move to own class when tested)
+   // Temperature model  (should move to own class when tested)
    private final YoDouble estimatedTemp;
 
    private TMotorTemperatureModel temperatureModel;
+   private final TMotorOverTorqueProcessor overTorqueProcessor;
 
    private double dt;
 
    public TMotor(int id, String name, TMotorVersion version, double dt, YoRegistry parentRegistry)
    {
+      this(id, name, version, dt, null, false, null, parentRegistry);
+   }
+   
+   public TMotor(int id, String name, TMotorVersion version, double dt, YoDouble offsetIntervalRateLimit, boolean useTorqueProcessor, YoDouble yoTime, YoRegistry parentRegistry)
+   {
       this.ID = id;
       this.motorName = name;
       this.dt = dt;
+      this.version = version;
       String prefix = motorName + "_";
 
       TMotorParameters motorParameters = version.getMotorParameters();
@@ -99,13 +115,18 @@ public class TMotor
       motorReply = new TMotorReply(motorParameters);
 
       registry = new YoRegistry(prefix + name);
-      yoCANMsg = new YoCANMsg(motorName, registry);
-      
+      debugRegistry = new YoRegistry(prefix + name + "Debug");
+      yoCANMsg = new YoCANMsg(motorName, debugRegistry);
+
       //parameters
       gearRatio = new YoDouble(prefix + "gearRatio", registry);
       torqueScale = new YoDouble(prefix + "torqueScale", registry);
       kt = new YoDouble(prefix + "kt", registry);
-      offsetInterval = new YoInteger(prefix + "offsetInterval", registry);
+      offsetIntervalRequested = new YoInteger(prefix + "offsetInterval", registry);
+      if(offsetIntervalRateLimit == null)
+         offsetIntervalRateLimited = new RateLimitedYoVariable(prefix + "offsetIntervalRateLimited", registry, 0.3,  dt);
+      else
+         offsetIntervalRateLimited = new RateLimitedYoVariable(prefix + "offsetIntervalRateLimited", registry, offsetIntervalRateLimit,  dt);
       motorDirection = new YoInteger(prefix + "motorDirection", registry);
 
       motorDirection.set(1);
@@ -114,12 +135,12 @@ public class TMotor
       kt.set(motorParameters.getKt());
       outputAnglePerInputRevolution = 2.0 * Math.PI / motorParameters.getGearRatio();
 
-      //desireds
-      desiredPositionRaw = new YoInteger(prefix + "desiredPositionRaw", registry);
-      desiredVelocityRaw = new YoInteger(prefix + "desiredVelocityRaw", registry);
-      desiredTorqueRaw = new YoInteger(prefix + "desiredTorqueRaw", registry);
-      desiredKpRaw = new YoInteger(prefix + "desiredKpRaw", registry);
-      desiredKdRaw = new YoInteger(prefix + "desiredKdRaw", registry);
+      // Desireds setpoints
+      desiredPositionRaw = new YoInteger(prefix + "desiredPositionRaw", debugRegistry);
+      desiredVelocityRaw = new YoInteger(prefix + "desiredVelocityRaw", debugRegistry);
+      desiredTorqueRaw = new YoInteger(prefix + "desiredTorqueRaw", debugRegistry);
+      desiredKpRaw = new YoInteger(prefix + "desiredKpRaw", debugRegistry);
+      desiredKdRaw = new YoInteger(prefix + "desiredKdRaw", debugRegistry);
 
       desiredPosition = new YoDouble(prefix + "desiredActuatorPosition", registry);
       desiredVelocity = new YoDouble(prefix + "desiredVelocity", registry);
@@ -127,26 +148,39 @@ public class TMotor
       desiredKp = new YoDouble(prefix + "desiredKp", registry);
       desiredKd = new YoDouble(prefix + "desiredKd", registry);
 
-      // measureds
-      measuredPositionRaw = new YoDouble(prefix + "measuredPositionRaw", registry);
-      measuredVelocityRaw = new YoDouble(prefix + "measuredVelocityRaw", registry);
-      measuredTorqueRaw = new YoDouble(prefix + "measuredTorqueRaw", registry);
+      // Measured data
+      measuredPositionRaw = new YoDouble(prefix + "measuredPositionRaw", debugRegistry);
+      measuredVelocityRaw = new YoDouble(prefix + "measuredVelocityRaw", debugRegistry);
+      measuredTorqueRaw = new YoDouble(prefix + "measuredTorqueRaw", debugRegistry);
 
       measuredPosition = new YoDouble(prefix + "measuredActuatorPosition", registry);
       measuredVelocity = new YoDouble(prefix + "measuredVelocity", registry);
       measuredTorque = new YoDouble(prefix + "measuredTorque", registry);
       measuredCurrent = new YoDouble(prefix + "measuredCurrent", registry);
 
-      measuredTorqueFiltered = new AlphaFilteredYoVariable(prefix + "measuredTorqueFilt", registry, 0.9, measuredTorque);
-      measuredVelocityFDAlpha = new YoDouble(prefix + "measuredVelocityFDAlpha", registry);
-      measuredVelocityFD = new FilteredVelocityYoVariable(prefix + "measuredVelocityFilt", null, measuredVelocityFDAlpha, measuredPosition, dt, registry);
-      measuredVelocityFDAlpha.set(0.95);
+      measuredTorqueFiltered = new AlphaFilteredYoVariable(prefix + "measuredTorqueFilt", debugRegistry, 0.9, measuredTorque);
+      measuredVelocityAlpha = new YoDouble(prefix + "measuredVelocityAlpha", debugRegistry);
+      measuredVelocityFiltered = new AlphaFilteredYoVariable(prefix + "measuredVelocityFilt", registry, measuredVelocityAlpha, measuredVelocity);
+      measuredVelocityAlpha.set(0.7);
 
       estimatedTemp = new YoDouble(prefix + "estimatedTemperature", registry);
 
-      CurrentProvider currentProvider = () -> this.getCurrent();
-      temperatureModel = new TMotorTemperatureModel(prefix, motorParameters, currentProvider, registry);
+      CurrentProvider currentProvider = this::getCurrent;
+      temperatureModel = new TMotorTemperatureModel(prefix, motorParameters, currentProvider, debugRegistry);
 
+      if (useTorqueProcessor && yoTime != null)
+      {
+         overTorqueProcessor = new TMotorOverTorqueProcessor(prefix, yoTime, version.getMotorParameters().getTorqueLimitUpper(), torqueScale, measuredTorque, registry);
+      }
+      else
+      {
+         overTorqueProcessor = null;
+      }
+
+      if(ENABLE_DEBUG_VARIABLES)
+      {
+         registry.addChild(debugRegistry);
+      }
       parentRegistry.addChild(registry);
    }
 
@@ -159,17 +193,24 @@ public class TMotor
       yoCANMsg.setReceived(message);
       motorReply.parseAndUnpack(message);
 
+      offsetIntervalRateLimited.update(offsetIntervalRequested.getValue());
+
       measuredPositionRaw.set(motorReply.getMeasuredPositionRaw());
       measuredVelocityRaw.set(motorReply.getMeasuredVelocityRaw());
       measuredTorqueRaw.set(motorReply.getMeasuredTorqueRaw());
 
       double torqueScale = EuclidCoreTools.clamp(this.torqueScale.getValue(), minTorqueScale, maxTorqueScale);
-      measuredPosition.set(motorDirection.getValue() * motorReply.getMeasuredPosition() + offsetInterval.getValue() * outputAnglePerInputRevolution);
+      measuredPosition.set(motorDirection.getValue() * motorReply.getMeasuredPosition() + offsetIntervalRateLimited.getDoubleValue() * outputAnglePerInputRevolution);
       measuredVelocity.set(motorDirection.getValue() * motorReply.getMeasuredVelocity());
       measuredTorque.set(motorDirection.getValue() * motorReply.getMeasuredTorque() * torqueScale);
       measuredCurrent.set(measuredTorque.getDoubleValue() / gearRatio.getDoubleValue() / kt.getDoubleValue());
 
-      measuredVelocityFD.update();
+      if (overTorqueProcessor != null)
+      {
+         measuredTorque.set(overTorqueProcessor.computeWrapAroundCompensatedTorque());
+      }
+
+      measuredVelocityFiltered.update();
       measuredTorqueFiltered.update();
 
       temperatureModel.update(dt);
@@ -182,7 +223,7 @@ public class TMotor
    public void setCommand(double kp, double kd, double desiredPosition, double desiredVelocity, double desiredTorque)
    {
       double torqueScale = EuclidCoreTools.clamp(this.torqueScale.getValue(), minTorqueScale, maxTorqueScale);
-      double adjustedDesiredPosition = motorDirection.getValue() * (desiredPosition - offsetInterval.getValue() * outputAnglePerInputRevolution);
+      double adjustedDesiredPosition = motorDirection.getValue() * (desiredPosition - offsetIntervalRateLimited.getDoubleValue() * outputAnglePerInputRevolution);
       double adjustedDesiredVelocity = motorDirection.getValue() * desiredVelocity;
       double adjustedDesiredTorque = motorDirection.getValue() * desiredTorque / torqueScale;
 
@@ -230,6 +271,11 @@ public class TMotor
       yoCANMsg.setSent(motorCommand.getCANMsg());
    }
 
+   public String getMotorName()
+   {
+      return motorName;
+   }
+
    public void reversePositiveMotorDirection()
    {
       motorDirection.set(-1);
@@ -247,7 +293,7 @@ public class TMotor
 
    public double getFilteredVelocity()
    {
-      return measuredVelocityFD.getValue();
+      return measuredVelocityFiltered.getValue();
    }
 
    public double getTorque()
@@ -275,14 +321,24 @@ public class TMotor
       this.torqueScale.set(torqueScaling);
    }
 
-   public void setOffsetInterval(int offsetInterval)
+   public void setOffsetInterval(int offsetIntervalRequested)
    {
-      this.offsetInterval.set(offsetInterval);
+      this.offsetIntervalRequested.set(offsetIntervalRequested);
+   }
+
+   public int getOffsetInterval()
+   {
+      return offsetIntervalRequested.getValue();
    }
 
    public int getID()
    {
       return ID;
+   }
+
+   public double getOutputAnglePerInputRevolution()
+   {
+      return outputAnglePerInputRevolution;
    }
 
    /**
@@ -298,5 +354,18 @@ public class TMotor
    public double getCurrent()
    {
       return this.measuredCurrent.getDoubleValue();
+   }
+
+   public YoInteger getOffsetIntervalRequested()
+   {
+      return offsetIntervalRequested;
+   }
+
+   public void setOverTorqueCompensationEnabled(BooleanSupplier enabled)
+   {
+      if (overTorqueProcessor != null)
+      {
+         overTorqueProcessor.setEnabled(enabled);
+      }
    }
 }
