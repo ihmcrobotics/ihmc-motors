@@ -161,7 +161,7 @@ public class TMotor
       measuredTorqueFiltered = new AlphaFilteredYoVariable(prefix + "measuredTorqueFilt", debugRegistry, 0.9, measuredTorque);
       measuredVelocityAlpha = new YoDouble(prefix + "measuredVelocityAlpha", debugRegistry);
       measuredVelocityFiltered = new AlphaFilteredYoVariable(prefix + "measuredVelocityFilt", registry, measuredVelocityAlpha, measuredVelocity);
-      measuredVelocityAlpha.set(0.7);
+      measuredVelocityAlpha.set(0.92);
 
       estimatedTemp = new YoDouble(prefix + "estimatedTemperature", registry);
 
