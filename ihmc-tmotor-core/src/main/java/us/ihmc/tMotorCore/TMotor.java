@@ -4,15 +4,11 @@ import peak.can.basic.TPCANMsg;
 import us.ihmc.CAN.YoCANMsg;
 import us.ihmc.euclid.tools.EuclidCoreTools;
 import us.ihmc.robotics.math.filters.AlphaFilteredYoVariable;
-import us.ihmc.robotics.math.filters.FilteredVelocityYoVariable;
 import us.ihmc.robotics.math.filters.RateLimitedYoVariable;
 import us.ihmc.tMotorCore.CANMessages.TMotorCommand;
 import us.ihmc.tMotorCore.CANMessages.TMotorReply;
 import us.ihmc.tMotorCore.parameters.TMotorParameters;
 import us.ihmc.temperatureModel.CurrentProvider;
-import us.ihmc.yoVariables.parameters.DoubleParameter;
-import us.ihmc.yoVariables.providers.BooleanProvider;
-import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoInteger;
@@ -269,6 +265,11 @@ public class TMotor
    {
       motorCommand.setCommandToZeroMotor();
       yoCANMsg.setSent(motorCommand.getCANMsg());
+   }
+
+   public void setPositionJointOffset(double jointPositionOffset)
+   { // initialize measured joint position to be at 0.0
+      measuredPosition.set(-jointPositionOffset);
    }
 
    public String getMotorName()
