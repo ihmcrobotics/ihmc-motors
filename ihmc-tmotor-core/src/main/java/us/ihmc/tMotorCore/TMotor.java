@@ -90,19 +90,29 @@ public class TMotor
    private TMotorTemperatureModel temperatureModel;
    private final TMotorOverTorqueProcessor overTorqueProcessor;
 
+   private final boolean hasMotorSpaceGains;
    private double dt;
 
    public TMotor(int id, String name, TMotorVersion version, double dt, YoRegistry parentRegistry)
    {
-      this(id, name, version, dt, null, false, null, parentRegistry);
+      this(id, name, version, dt, null, false, false, null, parentRegistry);
    }
-   
-   public TMotor(int id, String name, TMotorVersion version, double dt, YoDouble offsetIntervalRateLimit, boolean useTorqueProcessor, YoDouble yoTime, YoRegistry parentRegistry)
+
+   public TMotor(int id,
+                 String name,
+                 TMotorVersion version,
+                 double dt,
+                 YoDouble offsetIntervalRateLimit,
+                 boolean useTorqueProcessor,
+                 boolean hasMotorSpaceGains,
+                 YoDouble yoTime,
+                 YoRegistry parentRegistry)
    {
       this.ID = id;
       this.motorName = name;
       this.dt = dt;
       this.version = version;
+      this.hasMotorSpaceGains = hasMotorSpaceGains;
       String prefix = motorName + "_";
 
       TMotorParameters motorParameters = version.getMotorParameters();
@@ -332,6 +342,11 @@ public class TMotor
       return offsetIntervalRequested.getValue();
    }
 
+   public boolean hasMotorSpaceGains()
+   {
+      return hasMotorSpaceGains;
+   }
+
    public int getID()
    {
       return ID;
@@ -368,5 +383,10 @@ public class TMotor
       {
          overTorqueProcessor.setEnabled(enabled);
       }
+   }
+
+   public double getGearRatio()
+   {
+      return gearRatio.getValue();
    }
 }
