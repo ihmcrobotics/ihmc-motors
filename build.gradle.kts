@@ -9,7 +9,6 @@ ihmc {
    version = "1.0.0"
    vcsUrl = "https://github.com/ihmcrobotics/ihmc-motors"
    openSource = true
-   maintainer = "ihmc-motors"
 
    configureDependencyResolution()
    configurePublications()
