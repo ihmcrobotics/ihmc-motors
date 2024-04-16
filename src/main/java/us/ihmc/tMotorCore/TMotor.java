@@ -280,6 +280,36 @@ public class TMotor
       measuredPosition.set(-jointPositionOffset);
    }
 
+   /**
+    * Estimates the current offset interval from a known position. The motor must be roughly
+    * in the known position, and the known position must be accurately measured ahead of time.
+    * This is basically the inverse of how the current measuredPosition is calculated from
+    * the known offsetInterval, except in this case offsetInterval is the unknown and
+    * measuredPosition is known.
+    *
+    * @param knownPosition-the known position used for calibration or zeroing
+    */
+   public int estimateOffsetIntervalFromPosition(double knownPosition)
+   {
+      return estimateOffsetIntervalFromPosition(knownPosition, motorDirection.getIntegerValue(), motorReply.getMeasuredPosition(), outputAnglePerInputRevolution);
+      //return (int) Math.round((knownPosition - (motorDirection.getValue() * motorReply.getMeasuredPosition())) / outputAnglePerInputRevolution);
+   }
+
+   /**
+    * Static version of the above method. Can be used for unit test.
+    *
+    * @param knownPosition-the known position used for calibration or zeroing
+    * @param motorDirection-direction in which motor is spinning
+    * @param motorReplyMeasuredPosition-measured direction provided by CAN status message
+    * @param outputAnglePerInputRevolution-angle of each offset interval (2Pi/gearRatio)
+    * @return
+    */
+   public static int estimateOffsetIntervalFromPosition(double knownPosition, int motorDirection,
+                                                        double motorReplyMeasuredPosition, double outputAnglePerInputRevolution)
+   {
+      return (int) Math.round((knownPosition - (motorDirection * motorReplyMeasuredPosition)) / outputAnglePerInputRevolution);
+   }
+
    public String getMotorName()
    {
       return motorName;
