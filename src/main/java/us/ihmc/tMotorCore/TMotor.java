@@ -307,7 +307,7 @@ public class TMotor
    public static int estimateOffsetIntervalFromPosition(double knownPosition, int motorDirection,
                                                         double motorReplyMeasuredPosition, double outputAnglePerInputRevolution)
    {
-      return (int) Math.round((knownPosition - (motorDirection * motorReplyMeasuredPosition)) / outputAnglePerInputRevolution);
+      return (int) ((knownPosition - (motorDirection * motorReplyMeasuredPosition)) / outputAnglePerInputRevolution);
    }
 
    public String getMotorName()
