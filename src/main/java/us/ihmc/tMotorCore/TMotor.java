@@ -287,7 +287,8 @@ public class TMotor
     * the known offsetInterval, except in this case offsetInterval is the unknown and
     * measuredPosition is known.
     *
-    * @param knownPosition-the known position used for calibration or zeroing
+    * @param knownPosition             the known position used for calibration or zeroing
+    * @return estimatedOffsetInterval  the estimated offset interval
     */
    public int estimateOffsetIntervalFromPosition(double knownPosition)
    {
@@ -298,11 +299,11 @@ public class TMotor
    /**
     * Static version of the above method. Can be used for unit test.
     *
-    * @param knownPosition-the known position used for calibration or zeroing
-    * @param motorDirection-direction in which motor is spinning
-    * @param motorReplyMeasuredPosition-measured direction provided by CAN status message
-    * @param outputAnglePerInputRevolution-angle of each offset interval (2Pi/gearRatio)
-    * @return
+    * @param knownPosition                   the known position used for calibration or zeroing
+    * @param motorDirection                  direction in which motor is spinning
+    * @param motorReplyMeasuredPosition      measured position provided by CAN status message
+    * @param outputAnglePerInputRevolution   angle of each offset interval (2Pi/gearRatio)
+    * @return estimatedOffsetInterval        the estimated offset interval
     */
    public static int estimateOffsetIntervalFromPosition(double knownPosition, int motorDirection,
                                                         double motorReplyMeasuredPosition, double outputAnglePerInputRevolution)
