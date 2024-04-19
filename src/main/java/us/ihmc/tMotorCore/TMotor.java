@@ -316,6 +316,11 @@ public class TMotor
       return motorName;
    }
 
+   public TMotorVersion getVersion()
+   {
+      return version;
+   }
+
    public void reversePositiveMotorDirection()
    {
       motorDirection.set(-1);
