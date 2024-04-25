@@ -292,8 +292,8 @@ public class TMotor
     */
    public int estimateOffsetIntervalFromPosition(double knownPosition)
    {
-      return estimateOffsetIntervalFromPosition(knownPosition, motorDirection.getIntegerValue(), motorReply.getMeasuredPosition(), outputAnglePerInputRevolution);
-      //return (int) Math.round((knownPosition - (motorDirection.getValue() * motorReply.getMeasuredPosition())) / outputAnglePerInputRevolution);
+      return estimateOffsetIntervalFromPosition(knownPosition, motorDirection.getIntegerValue(),
+                                                motorReply.getMeasuredPosition(), outputAnglePerInputRevolution);
    }
 
    /**
@@ -404,6 +404,11 @@ public class TMotor
    public YoInteger getOffsetIntervalRequested()
    {
       return offsetIntervalRequested;
+   }
+
+   public RateLimitedYoVariable getOffsetIntervalRateLimited()
+   {
+      return offsetIntervalRateLimited;
    }
 
    public void setOverTorqueCompensationEnabled(BooleanSupplier enabled)
