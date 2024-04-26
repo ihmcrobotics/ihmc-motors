@@ -3,6 +3,7 @@ package us.ihmc.tMotorCore;
 import peak.can.basic.TPCANMsg;
 import us.ihmc.can.YoCANMsg;
 import us.ihmc.euclid.tools.EuclidCoreTools;
+import us.ihmc.robotics.geometry.AngleTools;
 import us.ihmc.robotics.math.filters.AlphaFilteredYoVariable;
 import us.ihmc.robotics.math.filters.RateLimitedYoVariable;
 import us.ihmc.tMotorCore.CANMessages.TMotorCommand;
@@ -290,10 +291,11 @@ public class TMotor
     * @param knownPosition             the known position used for calibration or zeroing
     * @return estimatedOffsetInterval  the estimated offset interval
     */
-   public int estimateOffsetIntervalFromPosition(double knownPosition)
+   public int estimateOffsetIntervalFromPosition(double knownPosition, boolean angleTrimmedMinusPItoPI)
    {
       return estimateOffsetIntervalFromPosition(knownPosition, motorDirection.getIntegerValue(),
-                                                motorReply.getMeasuredPosition(), outputAnglePerInputRevolution);
+                                                motorReply.getMeasuredPosition(), outputAnglePerInputRevolution,
+                                                (int) gearRatio.getDoubleValue(), angleTrimmedMinusPItoPI);
    }
 
    /**
@@ -303,12 +305,37 @@ public class TMotor
     * @param motorDirection                  direction in which motor is spinning
     * @param motorReplyMeasuredPosition      measured position provided by CAN status message
     * @param outputAnglePerInputRevolution   angle of each offset interval (2Pi/gearRatio)
+    * @param gearRatio                       gear ratio of this motor
     * @return estimatedOffsetInterval        the estimated offset interval
     */
    public static int estimateOffsetIntervalFromPosition(double knownPosition, int motorDirection,
-                                                        double motorReplyMeasuredPosition, double outputAnglePerInputRevolution)
+                                                        double motorReplyMeasuredPosition, double outputAnglePerInputRevolution,
+                                                        int gearRatio, boolean angleTrimmedMinusPItoPI)
    {
-      return (int) ((knownPosition - (motorDirection * motorReplyMeasuredPosition)) / outputAnglePerInputRevolution);
+      int offsetInterval = (int) ((knownPosition - (motorDirection * motorReplyMeasuredPosition)) / outputAnglePerInputRevolution);
+      int halfOfGearRatio = gearRatio / 2;
+      int upperLimit;
+      int lowerLimit;
+
+      if (angleTrimmedMinusPItoPI)
+      {
+         upperLimit = halfOfGearRatio + (int) Math.signum(gearRatio % 2);
+         lowerLimit = -halfOfGearRatio;
+      }
+      else
+      {
+         upperLimit = gearRatio - 1;
+         lowerLimit = 0;
+      }
+
+//      if (offsetInterval > upperLimit)
+//         offsetInterval = offsetInterval % upperLimit + lowerLimit;
+//      else if (offsetInterval < lowerLimit)
+//         offsetInterval = Math.abs(offsetInterval) % lowerLimit + upperLimit;
+
+      offsetInterval = (int) AngleTools.shiftAngleToStartOfRange(offsetInterval, lowerLimit, gearRatio);
+
+      return offsetInterval;
    }
 
    public String getMotorName()
