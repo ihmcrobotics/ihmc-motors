@@ -289,6 +289,7 @@ public class TMotor
     * measuredPosition is known.
     *
     * @param knownPosition             the known position used for calibration or zeroing
+    * @param angleTrimmedMinusPItoPI   if output position of TMotor is shifted to -PI to PI rather than 0 to 2PI
     * @return estimatedOffsetInterval  the estimated offset interval
     */
    public int estimateOffsetIntervalFromPosition(double knownPosition, boolean angleTrimmedMinusPItoPI)
@@ -306,6 +307,7 @@ public class TMotor
     * @param motorReplyMeasuredPosition      measured position provided by CAN status message
     * @param outputAnglePerInputRevolution   angle of each offset interval (2Pi/gearRatio)
     * @param gearRatio                       gear ratio of this motor
+    * @param angleTrimmedMinusPItoPI         if output position of TMotor is shifted to -PI to PI rather than 0 to 2PI
     * @return estimatedOffsetInterval        the estimated offset interval
     */
    public static int estimateOffsetIntervalFromPosition(double knownPosition, int motorDirection,
@@ -313,25 +315,12 @@ public class TMotor
                                                         int gearRatio, boolean angleTrimmedMinusPItoPI)
    {
       int offsetInterval = (int) ((knownPosition - (motorDirection * motorReplyMeasuredPosition)) / outputAnglePerInputRevolution);
-      int halfOfGearRatio = gearRatio / 2;
-      int upperLimit;
       int lowerLimit;
 
       if (angleTrimmedMinusPItoPI)
-      {
-         upperLimit = halfOfGearRatio + (int) Math.signum(gearRatio % 2);
-         lowerLimit = -halfOfGearRatio;
-      }
+         lowerLimit = -gearRatio / 2;
       else
-      {
-         upperLimit = gearRatio - 1;
          lowerLimit = 0;
-      }
-
-//      if (offsetInterval > upperLimit)
-//         offsetInterval = offsetInterval % upperLimit + lowerLimit;
-//      else if (offsetInterval < lowerLimit)
-//         offsetInterval = Math.abs(offsetInterval) % lowerLimit + upperLimit;
 
       offsetInterval = (int) AngleTools.shiftAngleToStartOfRange(offsetInterval, lowerLimit, gearRatio);
 
