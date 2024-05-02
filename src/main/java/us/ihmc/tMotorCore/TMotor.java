@@ -314,7 +314,7 @@ public class TMotor
                                                         double motorReplyMeasuredPosition, double outputAnglePerInputRevolution,
                                                         int gearRatio, boolean angleTrimmedMinusPItoPI)
    {
-      int offsetInterval = (int) ((knownPosition - (motorDirection * motorReplyMeasuredPosition)) / outputAnglePerInputRevolution);
+      int offsetInterval = (int) Math.round((knownPosition - (motorDirection * motorReplyMeasuredPosition)) / outputAnglePerInputRevolution);
       int lowerLimit;
 
       if (angleTrimmedMinusPItoPI)
@@ -322,9 +322,36 @@ public class TMotor
       else
          lowerLimit = 0;
 
-      offsetInterval = (int) AngleTools.shiftAngleToStartOfRange(offsetInterval, lowerLimit, gearRatio);
+      offsetInterval = shiftOffsetIntervalToStartOfRange(offsetInterval, lowerLimit, gearRatio);
 
       return offsetInterval;
+   }
+
+   /**
+    * This will shift an offset interval to be in the range [<i>startOfRange</i>,
+    * (<i>startOfRange + lengthOfRange</i>)
+    *
+    * @param offsetIntervalToShift  the offset interval to shift
+    * @param startOfRange           start of the range
+    * @param lengthOfRange          length of range
+    * @return the shifted angle
+    */
+   public static int shiftOffsetIntervalToStartOfRange(double offsetIntervalToShift, double startOfRange, double lengthOfRange)
+   {
+      double ret = offsetIntervalToShift;
+      startOfRange = startOfRange - 1e-10;
+
+      if (offsetIntervalToShift < startOfRange)
+      {
+         ret = offsetIntervalToShift + Math.ceil((startOfRange - offsetIntervalToShift) / lengthOfRange) * lengthOfRange;
+      }
+
+      if (offsetIntervalToShift >= (startOfRange + lengthOfRange))
+      {
+         ret = offsetIntervalToShift - Math.floor((offsetIntervalToShift - startOfRange) / lengthOfRange) * lengthOfRange;
+      }
+
+      return (int) Math.round(ret);
    }
 
    public String getMotorName()
