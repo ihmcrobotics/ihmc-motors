@@ -3,6 +3,7 @@ package us.ihmc.tMotorCore;
 import peak.can.basic.TPCANMsg;
 import us.ihmc.can.YoCANMsg;
 import us.ihmc.euclid.tools.EuclidCoreTools;
+import us.ihmc.robotics.geometry.AngleTools;
 import us.ihmc.robotics.math.filters.AlphaFilteredYoVariable;
 import us.ihmc.robotics.math.filters.RateLimitedYoVariable;
 import us.ihmc.tMotorCore.CANMessages.TMotorCommand;
@@ -280,9 +281,87 @@ public class TMotor
       measuredPosition.set(-jointPositionOffset);
    }
 
+   /**
+    * Estimates the current offset interval from a known position. The motor must be roughly
+    * in the known position, and the known position must be accurately measured ahead of time.
+    * This is basically the inverse of how the current measuredPosition is calculated from
+    * the known offsetInterval, except in this case offsetInterval is the unknown and
+    * measuredPosition is known.
+    *
+    * @param knownPosition             the known position used for calibration or zeroing
+    * @param angleTrimmedMinusPItoPI   if output position of TMotor is shifted to -PI to PI rather than 0 to 2PI
+    * @return estimatedOffsetInterval  the estimated offset interval
+    */
+   public int estimateOffsetIntervalFromPosition(double knownPosition, boolean angleTrimmedMinusPItoPI)
+   {
+      return estimateOffsetIntervalFromPosition(knownPosition, motorDirection.getIntegerValue(),
+                                                motorReply.getMeasuredPosition(), outputAnglePerInputRevolution,
+                                                (int) gearRatio.getDoubleValue(), angleTrimmedMinusPItoPI);
+   }
+
+   /**
+    * Static version of the above method. Can be used for unit test.
+    *
+    * @param knownPosition                   the known position used for calibration or zeroing
+    * @param motorDirection                  direction in which motor is spinning
+    * @param motorReplyMeasuredPosition      measured position provided by CAN status message
+    * @param outputAnglePerInputRevolution   angle of each offset interval (2Pi/gearRatio)
+    * @param gearRatio                       gear ratio of this motor
+    * @param angleTrimmedMinusPItoPI         if output position of TMotor is shifted to -PI to PI rather than 0 to 2PI
+    * @return estimatedOffsetInterval        the estimated offset interval
+    */
+   public static int estimateOffsetIntervalFromPosition(double knownPosition, int motorDirection,
+                                                        double motorReplyMeasuredPosition, double outputAnglePerInputRevolution,
+                                                        int gearRatio, boolean angleTrimmedMinusPItoPI)
+   {
+      int offsetInterval = (int) Math.round((knownPosition - (motorDirection * motorReplyMeasuredPosition)) / outputAnglePerInputRevolution);
+      int lowerLimit;
+
+      if (angleTrimmedMinusPItoPI)
+         lowerLimit = -gearRatio / 2;
+      else
+         lowerLimit = 0;
+
+      offsetInterval = shiftOffsetIntervalToStartOfRange(offsetInterval, lowerLimit, gearRatio);
+
+      return offsetInterval;
+   }
+
+   /**
+    * This will shift an offset interval to be in the range [<i>startOfRange</i>,
+    * (<i>startOfRange + lengthOfRange</i>)
+    *
+    * @param offsetIntervalToShift  the offset interval to shift
+    * @param startOfRange           start of the range
+    * @param lengthOfRange          length of range
+    * @return the shifted angle
+    */
+   public static int shiftOffsetIntervalToStartOfRange(double offsetIntervalToShift, double startOfRange, double lengthOfRange)
+   {
+      double ret = offsetIntervalToShift;
+      startOfRange = startOfRange - 1e-10;
+
+      if (offsetIntervalToShift < startOfRange)
+      {
+         ret = offsetIntervalToShift + Math.ceil((startOfRange - offsetIntervalToShift) / lengthOfRange) * lengthOfRange;
+      }
+
+      if (offsetIntervalToShift >= (startOfRange + lengthOfRange))
+      {
+         ret = offsetIntervalToShift - Math.floor((offsetIntervalToShift - startOfRange) / lengthOfRange) * lengthOfRange;
+      }
+
+      return (int) Math.round(ret);
+   }
+
    public String getMotorName()
    {
       return motorName;
+   }
+
+   public TMotorVersion getVersion()
+   {
+      return version;
    }
 
    public void reversePositiveMotorDirection()
@@ -368,6 +447,11 @@ public class TMotor
    public YoInteger getOffsetIntervalRequested()
    {
       return offsetIntervalRequested;
+   }
+
+   public RateLimitedYoVariable getOffsetIntervalRateLimited()
+   {
+      return offsetIntervalRateLimited;
    }
 
    public void setOverTorqueCompensationEnabled(BooleanSupplier enabled)
