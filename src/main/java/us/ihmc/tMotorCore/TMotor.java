@@ -3,7 +3,6 @@ package us.ihmc.tMotorCore;
 import peak.can.basic.TPCANMsg;
 import us.ihmc.can.YoCANMsg;
 import us.ihmc.euclid.tools.EuclidCoreTools;
-import us.ihmc.robotics.geometry.AngleTools;
 import us.ihmc.tMotorCore.CANMessages.TMotorCommand;
 import us.ihmc.tMotorCore.CANMessages.TMotorReply;
 import us.ihmc.tMotorCore.parameters.TMotorParameters;
