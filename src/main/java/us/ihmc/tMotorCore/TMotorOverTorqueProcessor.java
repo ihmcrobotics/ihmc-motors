@@ -1,6 +1,6 @@
 package us.ihmc.tMotorCore;
 
-import us.ihmc.robotics.math.filters.GlitchFilteredYoBoolean;
+import us.ihmc.yoVariables.filters.GlitchFilteredYoBoolean;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;

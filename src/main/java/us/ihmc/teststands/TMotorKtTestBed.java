@@ -26,12 +26,12 @@ import us.ihmc.realtime.MonotonicTime;
 import us.ihmc.realtime.PriorityParameters;
 import us.ihmc.robotDataLogger.YoVariableServer;
 import us.ihmc.robotDataLogger.logger.DataServerSettings;
-import us.ihmc.robotics.math.filters.AlphaFilteredYoVariable;
 import us.ihmc.robotics.math.filters.ButterworthFilteredYoVariable;
 import us.ihmc.robotics.math.functionGenerator.YoFunctionGeneratorNew;
 import us.ihmc.tMotorCore.TMotor;
 import us.ihmc.tMotorCore.TMotorLowLevelController;
 import us.ihmc.tMotorCore.TMotorVersion;
+import us.ihmc.yoVariables.filters.AlphaFilterTools;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoEnum;
@@ -114,7 +114,7 @@ public class TMotorKtTestBed extends EtherCATRealtimeThread
 
       receivedMsg.setLength((byte) 6);
 
-      double alpha = AlphaFilteredYoVariable.computeAlphaGivenBreakFrequencyProperly(140, DT);
+      double alpha = AlphaFilterTools.computeAlphaGivenBreakFrequencyProperly(140, DT);
       alphaLoadcell.set(alpha);
 
       ek1100State.set(ek1100.getState());
