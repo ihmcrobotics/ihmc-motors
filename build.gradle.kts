@@ -4,7 +4,7 @@ plugins {
 
 ihmc {
    group = "us.ihmc"
-   version = "1.0.3"
+   version = "1.0.4"
    vcsUrl = "https://github.com/ihmcrobotics/ihmc-motors"
    openSource = true
 
