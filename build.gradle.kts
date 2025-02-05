@@ -26,7 +26,7 @@ mainDependencies {
 
 testDependencies {
    api(ihmc.sourceSetProject("main"))
-   api("us.ihmc:ihmc-commons-testing:0.34.0")
+   api("us.ihmc:ihmc-commons-testing:0.35.1")
 }
 
 tasks.getByPath("installDist").dependsOn("compositeJar")
