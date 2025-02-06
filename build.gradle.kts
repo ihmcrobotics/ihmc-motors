@@ -18,7 +18,7 @@ mainDependencies {
    api("us.ihmc:ihmc-ethercat-master:0.16.0")
    api("us.ihmc:ihmc-realtime:1.6.0")
    api("us.ihmc:ihmc-yovariables-filters:0.13.5")
-   api("us.ihmc:ihmc-javafx-toolkit:17-0.22.11")
+   api("us.ihmc:ihmc-javafx-toolkit:17-0.22.12")
    api("org.scream3r:jssc:2.8.0")
    api("us.ihmc:ihmc-robot-data-visualizer:$ihmcOpenRoboticsSoftwareVersion")
    api("us.ihmc:ihmc-robotics-toolkit:$ihmcOpenRoboticsSoftwareVersion")
