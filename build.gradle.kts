@@ -15,7 +15,7 @@ ihmc {
 val ihmcOpenRoboticsSoftwareVersion = "0.14.0-240126"
 
 mainDependencies {
-   api("us.ihmc:ihmc-ethercat-master:0.16.0")
+   api("us.ihmc:ihmc-ethercat-master:0.16.1")
    api("us.ihmc:ihmc-realtime:1.7.1")
    api("us.ihmc:ihmc-yovariables-filters:0.13.7")
    api("us.ihmc:ihmc-javafx-toolkit:17-0.22.12")
